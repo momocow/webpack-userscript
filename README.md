@@ -10,7 +10,7 @@ A webpack project prototype for user-scripts of Tampermonkey.
 - Fill in the `package.json` properly
 - Start coding from `<your-project>/src/index.js`
 
-## The project folder is required to contain the git folder, i.e. `.git/`
+> IMPORTANT! The project folder is required to contain the git folder, i.e. `.git/`
 
 ## Commands
 ### Version
