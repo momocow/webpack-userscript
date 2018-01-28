@@ -9,6 +9,12 @@ module.exports = {
     filename: 'exh-reader.user.js',
     path: path.resolve(__dirname, 'dist')
   },
+  module: {
+    rules: [{
+      test: /\.css$/,
+      use: [ 'to-string-loader', 'css-loader' ]
+    }]
+  },
   plugins: [
     new webpack.BannerPlugin({ banner: HEADER, raw: true, entryOnly: true })
   ]

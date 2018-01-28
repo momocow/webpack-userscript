@@ -16,6 +16,7 @@
     "minor": "gulp minor",
     "patch": "gulp patch",
     "watch": "gulp watch",
+    "pack": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -30,6 +31,7 @@
   "homepage": "http://",
   "devDependencies": {
     "clipboardy": "^1.2.2",
+    "css-loader": "^0.28.9",
     "eslint-config-standard": "^11.0.0-beta.0",
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-node": "^5.2.1",
@@ -37,6 +39,7 @@
     "eslint-plugin-standard": "^3.0.1",
     "fs-extra": "^5.0.0",
     "gulp": "^3.9.1",
+    "to-string-loader": "^1.1.5",
     "webpack": "^3.10.0"
   },
   "dependencies": {
