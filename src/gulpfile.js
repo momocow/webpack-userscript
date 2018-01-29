@@ -15,7 +15,7 @@ function upgradePackage (tlevel, done) {
   // tick package.json version
   log.info('Upgrading')
   const PKG = require('./package.json')
-  PKG.version = new Version(PKG.version).tick(Version.TICK_LEVEL.MAJOR)
+  PKG.version = new Version(PKG.version).tick(Version.TICK_LEVEL.MAJOR).toString()
   fs.writeJsonSync(path.join(__dirname, 'package.json'), PKG, { spaces: 2 })
 
   // webpacking
