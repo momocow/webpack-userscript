@@ -22,6 +22,7 @@ module.exports = {
     }]
   },
   plugins: [
-    new webpack.BannerPlugin({ banner: HEADER, raw: true, entryOnly: true })
+    new webpack.BannerPlugin({ banner: HEADER, raw: true, entryOnly: true }),
+    new webpack.IgnorePlugin(/^colors(\/safe)?/) // colors.js is used in node console only
   ]
 }
