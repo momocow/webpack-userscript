@@ -7,7 +7,7 @@ A webpack project prototype for user-scripts of Tampermonkey.
 - Copy everythind under `src/` to your project folder
 - Install dependencies  
 `npm install`
-- Fill in the `package.json` properly (see [Headers](#Headers))
+- Fill in the `package.json` properly (see [Headers](#headers))
 - Start coding from `<your-project>/src/index.js`
 
 > IMPORTANT! The project folder is required to contain the git folder, i.e. `.git/`
