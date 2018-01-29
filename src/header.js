@@ -1,14 +1,20 @@
-const PKG = require('./package.json')
+const { padEnd } = require('./lib/string-utils')
 
-function pad (target, minLen, padStr = ' ') {
-  padStr = typeof padStr !== 'string' || padStr.length < 1 ? ' ' : padStr
-  while (target.length < minLen) target += padStr
-  return target
-}
+const PKG = require('./package.json')
 
 function extraHead () {
   let ret = []
-  for (let field of Object.keys(PKG.header)) ret.push(`// @${pad(field, 13)}${PKG.header[field]}`)
+  for (let field of Object.keys(PKG.header)) {
+    if (Array.isArray(PKG.header[field])) {
+      PKG.header[field].forEach(element => {
+        if (typeof element === 'string') {
+          ret.push(`// @${padEnd(field, 13)}${element}`)
+        }
+      })
+    } else if (typeof PKG.header[field] === 'string') {
+      ret.push(`// @${padEnd(field, 13)}${PKG.header[field]}`)
+    }
+  }
   return ret.join('\n')
 }
 

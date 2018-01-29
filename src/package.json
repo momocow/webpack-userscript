@@ -6,7 +6,8 @@
   "header": {
     "namespace": "*",
     "match": "*",
-    "updateURL": "*"
+    "updateURL": "*",
+    "grant": "GM_addStyle"
   },
   "engines": {
     "tampermonkey": ">=4.3.6"
@@ -16,7 +17,7 @@
     "minor": "gulp minor",
     "patch": "gulp patch",
     "watch": "gulp watch",
-    "pack": "webpack",
+    "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -39,8 +40,10 @@
     "eslint-plugin-standard": "^3.0.1",
     "fs-extra": "^5.0.0",
     "gulp": "^3.9.1",
+    "rollup": "^0.55.1",
     "to-string-loader": "^1.1.5",
-    "webpack": "^3.10.0"
+    "webpack": "^3.10.0",
+    "webpack-rollup-loader": "^0.7.0"
   },
   "dependencies": {
     "colors": "^1.1.2"
