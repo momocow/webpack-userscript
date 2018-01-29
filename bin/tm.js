@@ -1,12 +1,36 @@
 #!/usr/bin/env node
 
-const path = require('path')
+/************** Constant strings **************/
 
-const binIdx = process.argv.indexOf(__filename)
+const MISSING_DEP = `A missing dependency, '%s', is detected. Do you want to enable auto-installation?`
 
-if (binIdx + 1 >= process.argv.length) {
-  console.error()
-  process.exit(1)
-} else {
-  const targetPath = path.resolve(process.cwd(), process.argv[binIdx + 1])
+/**********************************************/
+
+const util = require('util')
+const require = wrapRequire()
+
+require('validate-npm-package-name')
+
+/******* Function stack starts from here ******/
+
+function wrapRequire () {
+  let wrapper = function (pkg) {
+    try {
+      return wrapper.require(pkg)
+    } catch (err) {
+      prompt(util.format(MISSING_DEP, pkg), 'yes', function (ans) {
+      })
+    }
+  }
+  wrapper.require = require
+
+  return wrapper
 }
+
+function prompt (msg, defaultValue, validator = function () {}) {
+  let displayedDefault
+  if (defaultValue) defaultValue = ` ${defaultValue}`
+  console.log(msg)
+}
+
+/**********************************************/
