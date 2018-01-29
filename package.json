@@ -2,9 +2,8 @@
   "name": "webpack-tampermonkey",
   "version": "1.0.0",
   "description": "A webpack project prototype for user-scripts of Tampermonkey.",
-  "main": "./src/index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "engines": {
+    "tampermonkey": ">=4.3.6"
   },
   "repository": {
     "type": "git",
