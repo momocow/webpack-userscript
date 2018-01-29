@@ -1,6 +1,8 @@
 # webpack-tampermonkey
 A webpack project prototype for user-scripts of Tampermonkey.
 
+> An init helper is WIP.
+
 ## Usage
 - Clone this repository  
 `git clone https://github.com/momocow/webpack-tampermonkey.git`
