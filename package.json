@@ -1,6 +1,6 @@
 {
   "name": "webpack-tampermonkey",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A webpack project prototype for user-scripts of Tampermonkey.",
   "bin": {
     "tm": "./bin/tm.js"
