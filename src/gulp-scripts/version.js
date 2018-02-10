@@ -20,6 +20,9 @@ class Version {
   tick (level, step = 1) {
     let verTokens = this._ver.split('.')
     verTokens[level] = parseInt(verTokens[level]) + step
+    for (let i = level + 1; i < 3; i++) {
+      verTokens[i] = 0
+    }
     this._ver = verTokens.join('.')
     return this
   }
