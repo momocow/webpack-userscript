@@ -2,7 +2,7 @@
   "name": "my-user-script",
   "version": "0.0.0",
   "description": "*",
-  "main": "*",
+  "main": "index.js",
   "header": {
     "namespace": "*",
     "match": "*",
