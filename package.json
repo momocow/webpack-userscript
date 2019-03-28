@@ -6,9 +6,11 @@
     "type": "git",
     "url": "git+https://github.com/momocow/webpack-tampermonkey.git"
   },
+  "main": "lib/index.js",
   "scripts": {
     "commit": "gitmoji -c",
-    "lint": "eslint index.js lib test"
+    "lint": "eslint ./**/*.js",
+    "test": "tape test/**/*.test.js"
   },
   "keywords": [
     "webpack",
@@ -30,7 +32,10 @@
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
     "gitmoji-cli": "^1.9.2",
-    "tape": "^4.10.1"
+    "memory-fs": "^0.4.1",
+    "tape": "^4.10.1",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0"
   },
   "peerDependencies": {
     "webpack": "^4.0.0"
