@@ -9,7 +9,7 @@
   "main": "lib/index.js",
   "scripts": {
     "commit": "gitmoji -c",
-    "lint": "eslint ./**/*.js",
+    "lint": "eslint './**/*.js'",
     "test": "tape test/**/*.test.js"
   },
   "keywords": [
