@@ -2,24 +2,46 @@
   "name": "webpack-tampermonkey",
   "version": "1.1.0",
   "description": "A webpack project prototype for user-scripts of Tampermonkey.",
-  "bin": {
-    "tm": "./bin/tm.js"
-  },
-  "engines": {
-    "tampermonkey": ">=4.3.6"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/momocow/webpack-tampermonkey.git"
   },
+  "scripts": {
+    "commit": "gitmoji -c",
+    "lint": "eslint index.js lib test"
+  },
   "keywords": [
     "webpack",
-    "tampermonkey"
+    "userscript",
+    "tampermonkey",
+    "greasemonkey"
   ],
   "author": "MomoCow",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/momocow/webpack-tampermonkey/issues"
   },
-  "homepage": "https://github.com/momocow/webpack-tampermonkey#readme"
+  "homepage": "https://github.com/momocow/webpack-tampermonkey#readme",
+  "devDependencies": {
+    "eslint": "^5.15.3",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "gitmoji-cli": "^1.9.2",
+    "tape": "^4.10.1"
+  },
+  "peerDependencies": {
+    "webpack": "^4.0.0"
+  },
+  "dependencies": {
+    "@tkausl/userscript-meta": "^1.0.2",
+    "schema-utils": "^1.0.0",
+    "webpack-sources": "^1.3.0"
+  },
+  "files": [
+    "lib",
+    "index.js"
+  ]
 }
