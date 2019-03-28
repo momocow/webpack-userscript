@@ -46,7 +46,6 @@
     "webpack-sources": "^1.3.0"
   },
   "files": [
-    "lib",
-    "index.js"
+    "lib"
   ]
 }
