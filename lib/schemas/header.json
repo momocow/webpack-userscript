@@ -1,0 +1,4 @@
+{
+  "description": "A header object describing the userscript",
+  "type": "object"
+}
