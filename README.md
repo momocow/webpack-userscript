@@ -1,12 +1,12 @@
-# webpack-tampermonkey
-[![Build Status](https://travis-ci.org/momocow/webpack-tampermonkey.svg?branch=master)](https://travis-ci.org/momocow/webpack-tampermonkey)
+# webpack-userscript
+[![Build Status](https://travis-ci.org/momocow/webpack-userscript.svg?branch=master)](https://travis-ci.org/momocow/webpack-userscript)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
-[![npm](https://img.shields.io/npm/v/webpack-tampermonkey.svg)](https://www.npmjs.com/webpack-tampermonkey)
+[![npm](https://img.shields.io/npm/v/webpack-userscript.svg)](https://www.npmjs.com/webpack-userscript)
 [![Gitmoji](https://img.shields.io/badge/gitmoji-%20😜%20😍-FFDD67.svg?style=flat-square)](https://gitmoji.carloscuesta.me/)
 
 A Webpack4+ plugin for userscript projects.
 
-> It was a *project prototype* before v1.\*, but it shows no flexibility and not customizable until it is a webpack plugin. For example, it did not support multiple scripts in a single project in v1.\*. See [issue #1](https://github.com/momocow/webpack-tampermonkey/issues/1).
+> The package has been renamed from `webpack-tampermonkey`.
 
 ## Features
 - Make your userscript development combined with Webpack
@@ -19,7 +19,7 @@ A Webpack4+ plugin for userscript projects.
 
 ## Installation
 ```bash
-npm i webpack-tampermonkey -D
+npm i webpack-userscript -D
 ```
 
 ## Usage
@@ -29,7 +29,7 @@ npm i webpack-tampermonkey -D
 Include the plugin in the `webpack.config.js` as the following example.
 
 ```js
-const WebpackTampermonkey = require('webpack-tampermonkey')
+const WebpackTampermonkey = require('webpack-userscript')
 
 module.exports = {
   plugins: [
