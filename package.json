@@ -1,7 +1,7 @@
 {
-  "name": "webpack-tampermonkey",
+  "name": "webpack-userscript",
   "version": "2.0.0",
-  "description": "A webpack project prototype for user-scripts of Tampermonkey.",
+  "description": "A Webpack4+ plugin for userscript projects.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/momocow/webpack-tampermonkey.git"
