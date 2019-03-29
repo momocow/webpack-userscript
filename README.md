@@ -81,7 +81,7 @@ interface WPTMOptions {
 ```
 
 #### HeaderFile
-A path to a js or json file which exports a header object.
+A path to a js or json file which exports a header object or a header provider function.
 
 ```ts
 type HeaderFile = string
