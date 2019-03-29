@@ -29,11 +29,11 @@ npm i webpack-userscript -D
 Include the plugin in the `webpack.config.js` as the following example.
 
 ```js
-const WebpackTampermonkey = require('webpack-userscript')
+const WebpackUserscript = require('webpack-userscript')
 
 module.exports = {
   plugins: [
-    new WebpackTampermonkey()
+    new WebpackUserscript()
   ]
 }
 ```
@@ -42,25 +42,25 @@ module.exports = {
 Examples can be found under [the test fixture folder](./test/fixtures).
 
 ## Configuration
-### WebpackTampermonkey
-The `WebpackTampermonkey` constructor has the following signature.
+### WebpackUserscript
+The `WebpackUserscript` constructor has the following signature.
 ```js
-new WebpackTampermonkey(options)
+new WebpackUserscript(options)
 ```
 
 ### options
 > Also see [the schema of options](./lib/schemas/options.json).
 
 ```ts
-type WebpackTampermonkeyOptions =
-  WPTMOptions |
-  HeaderFile |   // shorthand for WPTMOptions.headers
-  HeaderProvider // shorthand for WPTMOptions.headers
+type WebpackUserscriptOptions =
+  WPUSOptions |
+  HeaderFile |   // shorthand for WPUSOptions.headers
+  HeaderProvider // shorthand for WPUSOptions.headers
 ```
 
-#### WPTMOptions
+#### WPUSOptions
 ```ts
-interface WPTMOptions {
+interface WPUSOptions {
   headers: HeaderFile | HeaderProvider
 
   /**
