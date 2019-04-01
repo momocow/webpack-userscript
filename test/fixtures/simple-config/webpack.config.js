@@ -1,5 +1,5 @@
 const path = require('path')
-const WebpackTampermonkey = require('../../..')
+const WebpackUserscript = require('../../..')
 
 module.exports = {
   mode: 'production',
@@ -9,6 +9,6 @@ module.exports = {
     filename: 'index.js'
   },
   plugins: [
-    new WebpackTampermonkey()
+    new WebpackUserscript()
   ]
 }
