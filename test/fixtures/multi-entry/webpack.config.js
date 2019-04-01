@@ -1,5 +1,5 @@
 const path = require('path')
-const WebpackTampermonkey = require('../../..')
+const WebpackUserscript = require('../../..')
 
 module.exports = {
   mode: 'production',
@@ -13,6 +13,6 @@ module.exports = {
     filename: '[name].js'
   },
   plugins: [
-    new WebpackTampermonkey()
+    new WebpackUserscript()
   ]
 }

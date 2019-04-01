@@ -1,5 +1,5 @@
 const path = require('path')
-const WebpackTampermonkey = require('../../..')
+const WebpackUserscript = require('../../..')
 
 module.exports = {
   mode: 'production',
@@ -9,7 +9,7 @@ module.exports = {
     filename: 'index.js'
   },
   plugins: [
-    new WebpackTampermonkey({
+    new WebpackUserscript({
       headers: {
         name: 'Explicit Test',
         version: '2.0.0',

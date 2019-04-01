@@ -3,14 +3,19 @@ const WebpackUserscript = require('../../..')
 
 module.exports = {
   mode: 'production',
-  entry: path.join(__dirname, 'index.js'),
+  entry: {
+    'teplate-strings': path.join(__dirname, 'index.js')
+  },
   output: {
     path: path.resolve(__dirname, 'output'),
     filename: 'index.js'
   },
   plugins: [
     new WebpackUserscript({
-      invalidKey: 'invalidValue'
+      headers: {
+        name: 'WPUS: [name]',
+        version: '[version]-build.[hash]'
+      }
     })
   ]
 }

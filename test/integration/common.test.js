@@ -15,7 +15,8 @@ function getWebpackConfig (context) {
 const CONTEXT_LIST = [
   'simple-config',
   'explicit-config',
-  'headers-json'
+  'headers-json',
+  'template-strings'
 ]
 
 for (let CONTEXT_NAME of CONTEXT_LIST) {
