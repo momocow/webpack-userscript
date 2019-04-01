@@ -4,12 +4,12 @@
 [![npm](https://img.shields.io/npm/v/webpack-userscript.svg)](https://www.npmjs.com/webpack-userscript)
 [![Gitmoji](https://img.shields.io/badge/gitmoji-%20😜%20😍-FFDD67.svg?style=flat-square)](https://gitmoji.carloscuesta.me/)
 
-A Webpack4+ plugin for userscript projects.
+A Webpack4+ plugin for userscript projects. 🙈
 
 > The package has been renamed from `webpack-tampermonkey`.
 
 ## Features
-- Make your userscript development combined with Webpack
+- Combine your userscript development with Webpack
   > With powerful Webpack support, you can even package everything in your userscript, e.g. icons and json data.
 - Ability to generate userscript headers
 - Ability to generate both `.user.js` and `.meta.js`
@@ -91,16 +91,58 @@ type HeaderFile = string
 A function that returns a header object.
 
 ```ts
-type HeaderProvider = (data: object) => HeaderObject
+type HeaderProvider = (data: DataObject) => HeaderObject
 ```
-
-Note that `data` contains the same variables as [`output.filename` templates](https://webpack.js.org/configuration/output#outputfilename).
 
 #### HeaderObject
-A header object.
+A header object, whose leaves are webpack-like template strings in `[var]` format. Available variables can be found at [DataObject](#dataobject).
 
-> Also see [explicit-config/webpack.config.js](./test/fixtures/explicit-config/webpack.config.js#L13).
+> Also see [explicit-config/webpack.config.js](./test/fixtures/explicit-config/webpack.config.js#L13) and [template-strings/webpack.config.js](./test/fixtures/template-strings/webpack.config.js#L16).
 
 ```ts
-type HeaderFile = object
+type HeaderFile = Record<string, string | Array<string>>
 ```
+
+#### DataObject
+Local variables used to interpolate the templates of a [HeaderObject](#headerobject).
+
+```ts
+interface DataObject {
+  /**
+   * Hash of Webpack compilation
+   */
+  hash: string
+
+  /**
+   * Webpack chunk hash
+   */
+  chunkHash: string
+
+  /**
+   * Webpack chunk name
+   */
+  chunkName: string
+
+  /**
+   * Entry file path, which may contain queries
+   */
+  file: string
+
+  /**
+   * Query string
+   */
+  query: string
+
+  /**
+   * Info from package.json
+   */
+  name: string
+  version: string
+  description: string
+  author: string
+  homepage: string
+  bugs: string // URL
+}
+```
+
+> Also see [template-strings/webpack.config.js](./test/fixtures/template-strings/webpack.config.js#L16).
