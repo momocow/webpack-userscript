@@ -14,7 +14,7 @@ module.exports = {
     new WebpackUserscript({
       headers: {
         name: 'WPUS: [name]',
-        version: '[version]-build.[hash]'
+        version: '[version]-build.[buildNo].[hash]'
       }
     })
   ]

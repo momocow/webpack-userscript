@@ -39,7 +39,44 @@ module.exports = {
 ```
 
 ## Examples
-Examples can be found under [the test fixture folder](./test/fixtures).
+
+### Hot Development
+The following example can be used in development mode with the help of [`webpack-dev-server`](https://github.com/webpack/webpack-dev-server).
+
+`webpack-dev-server` will build the userscript in **watch** mode. Each time the project is built, the `buildNo` variable will increase by 1.
+
+In the following configuration, a portion of the `version` contains the `buildNo`; therefore, each time there is a build, the `version` is also increased so as to indicate a new update available for the script engine like Tampermonkey or GreaseMonkey.
+
+After the first time starting the `webpack-dev-server`, you can install the script via `http://localhost:8080/<project-name>.user.js` (the URL is actually refered to your configuration of `webpack-dev-server`). Once installed, there is no need to manually reinstall the script until you stop the server. To update the script, the script engine has an **update** button on the GUI for you.
+
+- `webpack.config.dev.js`
+```js
+const path = require('path')
+const WebpackUserscript = require('webpack-userscript')
+const dev = process.env.NODE_ENV === 'development'
+
+module.exports = {
+  mode: dev ? 'development' : 'production',
+  entry: path.resolve(__dirname, 'src', 'index.js'),
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: '<project-name>.user.js'
+  },
+  devServer: {
+    contentBase: path.join(__dirname, 'dist')
+  },
+  plugins: [
+    new WebpackUserscript({
+      headers: {
+        version: dev ? `${version}-build.${buildNo}` : version
+      }
+    })
+  ]
+}
+```
+
+### Other
+Other examples can be found under [the test fixture folder](./test/fixtures).
 
 ## Configuration
 ### WebpackUserscript
@@ -132,6 +169,11 @@ interface DataObject {
    * Query string
    */
   query: string
+
+  /**
+   * Build number
+   */
+  buildNo: number
 
   /**
    * Info from package.json
