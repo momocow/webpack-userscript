@@ -68,7 +68,7 @@ module.exports = {
   plugins: [
     new WebpackUserscript({
       headers: {
-        version: dev ? `${version}-build.${buildNo}` : version
+        version: dev ? '[version]-build.[buildNo]' : '[version]'
       }
     })
   ]
