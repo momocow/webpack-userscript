@@ -68,7 +68,7 @@ module.exports = {
   plugins: [
     new WebpackUserscript({
       headers: {
-        version: dev ? `${version}-build.${buildNo}` : version
+        version: dev ? `[version]-build.[buildNo]` : version
       }
     })
   ]
@@ -132,7 +132,7 @@ type HeaderProvider = (data: DataObject) => HeaderObject
 ```
 
 #### HeaderObject
-A header object, whose leaves are webpack-like template strings in `[var]` format. Available variables can be found at [DataObject](#dataobject).
+A header object, whose leaves are webpack-like template strings in `[<var_name>]` format. Available variables can be found at [DataObject](#dataobject).
 
 > Also see [explicit-config/webpack.config.js](./test/fixtures/explicit-config/webpack.config.js#L13) and [template-strings/webpack.config.js](./test/fixtures/template-strings/webpack.config.js#L16).
 
