@@ -1,0 +1,12 @@
+{
+  "plugins": [
+    "semantic-release-gitmoji",
+    "@semantic-release/github",
+    "@semantic-release/npm",
+    [
+      "@semantic-release/git", {
+        "message": ":bookmark: v${nextRelease.version} [skip ci]\n\nhttps://github.com/momocow/webpack-userscript/releases/tag/${nextRelease.gitTag}"
+      }
+    ]
+  ]
+}
