@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/momocow/webpack-tampermonkey#readme",
   "devDependencies": {
+    "@semantic-release/git": "^7.0.16",
     "eslint": "^5.15.3",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.16.0",
