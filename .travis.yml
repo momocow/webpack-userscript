@@ -1,9 +1,16 @@
 language: node_js
 node_js:
-  - node
   - 8
   - 10
+  - 12
 
 script:
   - npm run lint
   - npm test
+
+jobs:
+  include:
+    - stage: release
+      node_js: lts/*
+      script:
+        - npm run release
