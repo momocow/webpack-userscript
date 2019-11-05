@@ -36,6 +36,25 @@
         "renameExt": {
           "description": "To rename *.js files that are not *.user.js to become *.user.js",
           "type": "boolean"
+        },
+        "hotDev": {
+          "description": "Use \"@require\" keyword in the meta block to include the script",
+          "type": "object",
+          "properties": {
+            "baseUrl": {
+              "description": "The base URL of the dev server",
+              "typeof": "string"
+            },
+            "filename": {
+              "typeof": "string"
+            },
+            "enable": {
+              "anyOf": [
+                { "typeof": "function" },
+                { "type": "boolean" }
+              ]
+            }
+          }
         }
       },
       "additionalProperties": false
