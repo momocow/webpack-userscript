@@ -16,7 +16,8 @@ const CONTEXT_LIST = [
   'simple-config',
   'explicit-config',
   'headers-json',
-  'template-strings'
+  'template-strings',
+  'header-provider'
 ]
 
 for (let CONTEXT_NAME of CONTEXT_LIST) {
