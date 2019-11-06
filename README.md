@@ -98,7 +98,7 @@ type WebpackUserscriptOptions =
 #### WPUSOptions
 ```ts
 interface WPUSOptions {
-  headers: HeaderFile | HeaderProvider
+  headers: HeaderFile | HeaderProvider | HeaderObject
 
   /**
    * Output *.meta.js or not
@@ -137,7 +137,7 @@ A header object, whose leaves are webpack-like template strings in `[<var_name>]
 > Also see [explicit-config/webpack.config.js](./test/fixtures/explicit-config/webpack.config.js#L13) and [template-strings/webpack.config.js](./test/fixtures/template-strings/webpack.config.js#L16).
 
 ```ts
-type HeaderFile = Record<string, string | Array<string>>
+type HeaderObject = Record<string, string | Array<string>>
 ```
 
 #### DataObject
