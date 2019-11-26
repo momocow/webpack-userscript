@@ -22,7 +22,8 @@ test('template variables', function (t) {
     'query',
     'buildNo',
     'buildTime',
-    'basename'
+    'basename',
+    'filename'
   ]
 
   const context = path.resolve(path.dirname(__dirname), 'fixtures', 'simple-config')
