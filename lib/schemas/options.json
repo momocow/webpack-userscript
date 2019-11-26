@@ -37,8 +37,8 @@
           "description": "To rename *.js files that are not *.user.js to become *.user.js",
           "type": "boolean"
         },
-        "hotDev": {
-          "description": "Use \"@require\" keyword in the meta block to include the script",
+        "proxyScript": {
+          "description": "Containing a \"@require\" header in the meta block to include the main script",
           "type": "object",
           "properties": {
             "baseUrl": {
