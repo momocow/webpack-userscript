@@ -54,7 +54,7 @@ test('proxy-script', function (t) {
     t.same(meta, expectedMeta)
 
     const proxy = outputFS.readFileSync(
-      path.join(context, 'output', 'tm-no-cache.proxy.user.js'),
+      path.join(context, 'output', 'index.proxy.user.js'),
       'utf8'
     )
     const expectedProxy = fs.readFileSync(path.join(context, 'expected.proxy.user.js'), 'utf8')

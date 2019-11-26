@@ -22,7 +22,7 @@ module.exports = {
       pretty: false,
       proxyScript: {
         baseUrl: 'http://127.0.0.1:12345',
-        filename: 'tm-no-cache.proxy.user.js',
+        filename: '[basename].proxy.user.js',
         enable: true
       }
     })
