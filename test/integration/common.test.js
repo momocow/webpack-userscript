@@ -17,7 +17,8 @@ const CONTEXT_LIST = [
   'explicit-config',
   'headers-json',
   'template-strings',
-  'header-provider'
+  'header-provider',
+  'base-urls'
 ]
 
 for (let CONTEXT_NAME of CONTEXT_LIST) {
@@ -47,7 +48,6 @@ for (let CONTEXT_NAME of CONTEXT_LIST) {
       if (stats.hasWarnings()) {
         console.warn(info.warnings)
       }
-
       const output = outputFS.readFileSync(
         path.join(context, 'output', 'index.user.js'),
         'utf8'
