@@ -16,6 +16,8 @@ A Webpack4+ plugin for userscript projects. 🙈
   > `.meta.js` is used for update check containing headers only.
 - Properly track files in watch mode
   > Including external header files and package.json.
+- Helper mode to integrate with Webpack Dev Server and TamperMonkey.
+  > Additionally ouput proxy scripts along with main userscripts, which looks similar with `*.meta.js` but with additional `@require` meta field to include the main userscript, then you can set your TamperMonkey not to cache external files. It's useful when the script is under development.
 
 ## Installation
 ```bash
@@ -114,6 +116,18 @@ interface WPUSOptions {
    * Prettify the header
    */
   pretty: boolean
+
+  /**
+   * Base URL for downloadURL.
+   * If not provided, it will be set to `updateBaseUrl` if `updateBaseUrl` is provided
+   */
+  downloadBaseUrl: string
+
+  /**
+   * Base URL for updateURL
+   * If not provided, it will be set to `downloadBaseUrl` if `downloadBaseUrl` is provided
+   */
+  updateBaseUrl: string
 }
 ```
 
@@ -166,6 +180,16 @@ interface DataObject {
   file: string
 
   /**
+   * just like `file` but without queries
+   */
+  filename: string
+
+  /**
+   * just like `filename` but without file extension, i.e. ".user.js" or ".js"
+   */
+  basename: string
+
+  /**
    * Query string
    */
   query: string
@@ -174,6 +198,11 @@ interface DataObject {
    * Build number
    */
   buildNo: number
+
+  /**
+   * the 13-digits number represents the time the script is built
+   */
+  buildTime: number
 
   /**
    * Info from package.json
