@@ -16,6 +16,8 @@ A Webpack4+ plugin for userscript projects. 🙈
   > `.meta.js` is used for update check containing headers only.
 - Properly track files in watch mode
   > Including external header files and package.json.
+- Helper mode to integrate with Webpack Dev Server and TamperMonkey.
+  > Additionally ouput proxy scripts along with main userscripts, which looks similar with `*.meta.js` but with additional `@require` meta field to include the main userscript, then you can set your TamperMonkey not to cache external files. It's useful when the script is under development.
 
 ## Installation
 ```bash
@@ -45,6 +47,8 @@ The following example can be used in development mode with the help of [`webpack
 
 `webpack-dev-server` will build the userscript in **watch** mode. Each time the project is built, the `buildNo` variable will increase by 1.
 
+> **Notes**: `buildNo` will be reset to 0 if the dev server is terminated. In this case, if you expect the build version to be persisted during dev server restarting, you can use the `buildTime` variable instead.
+
 In the following configuration, a portion of the `version` contains the `buildNo`; therefore, each time there is a build, the `version` is also increased so as to indicate a new update available for the script engine like Tampermonkey or GreaseMonkey.
 
 After the first time starting the `webpack-dev-server`, you can install the script via `http://localhost:8080/<project-name>.user.js` (the URL is actually refered to your configuration of `webpack-dev-server`). Once installed, there is no need to manually reinstall the script until you stop the server. To update the script, the script engine has an **update** button on the GUI for you.
@@ -73,6 +77,38 @@ module.exports = {
     })
   ]
 }
+```
+
+### Integration with Webpack Dev Server and TamperMonkey
+If you feel tired with firing the update button on TamperMonkey GUI, maybe you can have a try at proxy script.
+
+A proxy script actually looks similar with the content of `*.meta.js` except that it contains additional `@require` field to include the main userscript. A proxy script is used since TamperMonkey has an option that makes external scripts always be update-to-date without caching, and external scripts are included into userscripts via the `@require` meta field. (You may also want to read this issue, [Tampermonkey/tampermonkey#767](https://github.com/Tampermonkey/tampermonkey/issues/767#issuecomment-542813282))
+
+To avoid caching and make the main script always be updated after each page refresh, we have to make our main script **"an external resource"**. That is where the proxy script comes in, it provides TamperMonkey with a `@require` pointint to the URL of the main script on the dev server, and each time you reload your testing page, it will trigger the update.
+
+> Actually it requires 2 reloads for each change to take effect on the page. The first reload trigger the update of external script but without execution (it runs the legacy version of the script), the second reload will start to run the updated script. 
+> 
+> I have no idea why TamperMonkey is desinged this way. But..., it's up to you!
+
+To enable the proxy script, provide a `proxyScript` configuration to the plugin constructor.
+
+Set `proxyScript.enable` to `true` will always enable proxy script, or you can provide a function that returns boolean. In the example below, the proxy script is enabled if the environment contains a variable, `LOCAL_DEV`, which is equal to `"1"`.
+
+`baseUrl` should be the base URL of the dev server, and the `filename` is for the proxy script.
+
+After starting the dev server, you can find your proxy script under `<baseUrl>/<filename>`. In the example below, assume the entry filename is `index.js`, you should visit `http://127.0.0.1:12345/index.proxy.user.js` to install the proxy script on TamperMonkey.
+
+> Notes that the leaf values of `proxyScript` with also be interpolated; that is, template variables which can be found [here](#dataobject) are also supported inside these string settings.
+
+```js
+new WebpackUserscript({
+  // <...your other configs...>,
+  proxyScript: {
+    baseUrl: 'http://127.0.0.1:12345',
+    filename: '[basename].proxy.user.js',
+    enable: () => process.env.LOCAL_DEV === '1'
+  }
+})
 ```
 
 ### Other
@@ -114,6 +150,41 @@ interface WPUSOptions {
    * Prettify the header
    */
   pretty: boolean
+
+  /**
+   * Base URL for downloadURL.
+   * If not provided, it will be set to `updateBaseUrl` if `updateBaseUrl` is provided
+   */
+  downloadBaseUrl: string
+
+  /**
+   * Base URL for updateURL
+   * If not provided, it will be set to `downloadBaseUrl` if `downloadBaseUrl` is provided
+   */
+  updateBaseUrl: string
+
+
+  /**
+   * Looks similar with `*.meta.js` but with additional `@require` meta field to include the main userscript.
+   * It can be useful if you set the TamperMonkey not to cache external files.
+   */
+  proxyScript: {
+    /**
+     * filename template of the proxy script, defaults to "[basename].proxy.user.js"
+     */
+    filename: string
+
+    /**
+     * Base URL of the dev server
+     */
+    baseUrl: string
+
+    /**
+     * Whether to enable proxy script generation,
+     * default value depends on whether `process.env.WEBPACK_DEV_SERVER` is `"true"` or not
+     */
+    enable: boolean | (() => boolean)
+  }
 }
 ```
 
@@ -166,6 +237,16 @@ interface DataObject {
   file: string
 
   /**
+   * just like `file` but without queries
+   */
+  filename: string
+
+  /**
+   * just like `filename` but without file extension, i.e. ".user.js" or ".js"
+   */
+  basename: string
+
+  /**
    * Query string
    */
   query: string
@@ -174,6 +255,11 @@ interface DataObject {
    * Build number
    */
   buildNo: number
+
+  /**
+   * the 13-digits number represents the time the script is built
+   */
+  buildTime: number
 
   /**
    * Info from package.json
