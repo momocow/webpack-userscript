@@ -55,6 +55,12 @@
               ]
             }
           }
+        },
+        "downloadBaseUrl": {
+          "typeof": "string"
+        },
+        "updateBaseUrl": {
+          "typeof": "string"
         }
       },
       "additionalProperties": false
