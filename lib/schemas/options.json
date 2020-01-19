@@ -11,6 +11,22 @@
     "HeaderFile": {
       "description": "A path to a *.js or *.json file that exports a HeaderObject or a HeaderProvider",
       "typeof": "string"
+    },
+    "StringFilter": {
+      "description": "filter used to test against a string",
+      "anyOf": [
+        { "instanceof": "RegExp" },
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              { "type": "string" },
+              { "instanceof": "RegExp" }
+            ]
+          }
+        }
+      ]
     }
   },
   "anyOf": [
@@ -61,6 +77,34 @@
         },
         "updateBaseUrl": {
           "typeof": "string"
+        },
+        "ssri": {
+          "anyOf": [
+            { "type": "boolean" },
+            {
+              "type": "object",
+              "properties": {
+                "include": {
+                  "$ref": "#/definitions/StringFilter"
+                },
+                "exclude": {
+                  "$ref": "#/definitions/StringFilter"
+                },
+                "algorithms": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "integrity": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                }
+              }
+            }
+          ]
         }
       },
       "additionalProperties": false
