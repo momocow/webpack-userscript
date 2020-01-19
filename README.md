@@ -18,6 +18,8 @@ A Webpack4+ plugin for userscript projects. 🙈
   > Including external header files and package.json.
 - Helper mode to integrate with Webpack Dev Server and TamperMonkey.
   > Additionally ouput proxy scripts along with main userscripts, which looks similar with `*.meta.js` but with additional `@require` meta field to include the main userscript, then you can set your TamperMonkey not to cache external files. It's useful when the script is under development.
+- Support generating SRIs for `@require` and `@resource` URLs if the protocol is either `http` or `https`.
+  > since v2.4.0
 
 ## Installation
 ```bash
@@ -184,6 +186,24 @@ interface WPUSOptions {
      * default value depends on whether `process.env.WEBPACK_DEV_SERVER` is `"true"` or not
      */
     enable: boolean | (() => boolean)
+  }
+
+  ssri: boolean | {
+    /**
+     * URL filters.
+     * Each of them is actually testing against a string compound of the meta field and the url.
+     * For example, if a header is provided as `{ require: "http://example.com/sth.js" }`,
+     * a string of "// @require http://example.com/sth.js" is tested with the provided filters.
+     */
+    include: string | RegExp | string[] | RegExp[]
+    exclude: string | RegExp | string[] | RegExp[]
+
+    /**
+     * @see https://github.com/npm/ssri#--integritystreamopts---integritystream
+     */
+    algorithms: ("sha256" | "sha384" | "sha512")[]
+    integrity: string
+    size: number
   }
 }
 ```
