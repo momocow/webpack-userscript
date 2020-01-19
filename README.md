@@ -19,7 +19,7 @@ A Webpack4+ plugin for userscript projects. 🙈
 - Helper mode to integrate with Webpack Dev Server and TamperMonkey.
   > Additionally ouput proxy scripts along with main userscripts, which looks similar with `*.meta.js` but with additional `@require` meta field to include the main userscript, then you can set your TamperMonkey not to cache external files. It's useful when the script is under development.
 - Support generating SRIs for `@require` and `@resource` URLs if the protocol is either `http` or `https`.
-  > since v2.4.0
+  > since v2.5.0
 
 ## Installation
 ```bash
