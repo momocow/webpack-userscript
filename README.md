@@ -201,7 +201,7 @@ interface WPUSOptions {
     /**
      * @see https://github.com/npm/ssri#--integritystreamopts---integritystream
      */
-    algorithms: "sha256" | "sha384" | "sha512"
+    algorithms: ("sha256" | "sha384" | "sha512")[]
     integrity: string
     size: number
   }
