@@ -4,4 +4,5 @@
 // @match https://google.com/*
 // @grant GM_setValue
 // @grant GM_getValue
+// @noframes 
 // ==/UserScript==

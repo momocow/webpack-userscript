@@ -17,7 +17,8 @@ module.exports = {
         grant: [
           'GM_setValue',
           'GM_getValue'
-        ]
+        ],
+        noframes: true
       },
       pretty: false
     })
