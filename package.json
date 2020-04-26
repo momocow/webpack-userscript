@@ -1,6 +1,6 @@
 {
   "name": "webpack-userscript",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "description": "A Webpack4+ plugin for userscript projects.",
   "repository": {
     "type": "git",
