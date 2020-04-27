@@ -6,7 +6,7 @@ type WebpackUserscriptOptions =
   HeaderProvider  // shorthand for WPUSOptions.headers
 
 interface WPUSOptions {
-  headers: HeaderFile | HeaderProvider | HeaderObject
+  headers?: HeaderFile | HeaderProvider | HeaderObject
 
   /**
    * Output *.meta.js files or not.
@@ -47,19 +47,19 @@ interface WPUSOptions {
      * Filename template of the proxy script.
      * Defaults to "[basename].proxy.user.js".
      */
-    filename: string
+    filename?: string
 
     /**
      * Base URL of the dev server.
      * Defaults to "http://localhost:8080/".
      */
-    baseUrl: string
+    baseUrl?: string
 
     /**
      * Enable proxy script generation or not.
      * Default value depends on whether `process.env.WEBPACK_DEV_SERVER` is `"true"` or not.
      */
-    enable: boolean | (() => boolean)
+    enable?: boolean | (() => boolean)
   }
 
   /**
@@ -72,15 +72,15 @@ interface WPUSOptions {
      * For example, if a header is provided as `{ require: "http://example.com/sth.js" }`,
      * a string of "// @require http://example.com/sth.js" is tested with the provided filters.
      */
-    include: string | RegExp | string[] | RegExp[]
-    exclude: string | RegExp | string[] | RegExp[]
+    include?: string | RegExp | string[] | RegExp[]
+    exclude?: string | RegExp | string[] | RegExp[]
 
     /**
      * @see https://github.com/npm/ssri#--integritystreamopts---integritystream
      */
-    algorithms: ("sha256" | "sha384" | "sha512")[]
-    integrity: string
-    size: number
+    algorithms?: ("sha256" | "sha384" | "sha512")[]
+    integrity?: string
+    size?: number
   }
 }
 
@@ -88,7 +88,7 @@ type HeaderFile = string
 
 type HeaderProvider = (data: DataObject) => HeaderObject
 
-type HeaderObject = Record<string, string | Array<string>> & {
+type HeaderObject = {
   name?: string
 
   namespace?: string
@@ -146,6 +146,8 @@ type HeaderObject = Record<string, string | Array<string>> & {
   unwrap?: boolean
 
   nocompat?: boolean | string
+  
+  [field: string]: string | string[] 
 }
 
 interface DataObject {
