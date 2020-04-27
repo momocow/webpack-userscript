@@ -147,7 +147,7 @@ type HeaderObject = {
 
   nocompat?: boolean | string
   
-  [field: string]: string | string[] // For any other field not listed above.
+  [field: string]: string | string[] | boolean // For any other field not listed above.
 }
 
 interface DataObject {
