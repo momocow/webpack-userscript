@@ -1,0 +1,5 @@
+{
+  "name": "@webpack-tampermonkey/bug-28",
+  "version": "1.0.0",
+  "main": "index.js"
+}
