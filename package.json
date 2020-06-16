@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/momocow/webpack-tampermonkey#readme",
   "devDependencies": {
-    "@semantic-release/git": "^7.0.16",
+    "@semantic-release/git": "^9.0.0",
     "eslint": "^5.15.3",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.16.0",
@@ -36,8 +36,8 @@
     "express": "^4.17.1",
     "gitmoji-cli": "^1.9.2",
     "memory-fs": "^0.4.1",
-    "semantic-release": "^15.13.31",
-    "semantic-release-gitmoji": "^1.3.2",
+    "semantic-release": "^17.0.8",
+    "semantic-release-gitmoji": "^1.3.4",
     "tape": "^4.10.1",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10"
