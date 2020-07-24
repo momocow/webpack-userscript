@@ -17,6 +17,9 @@ module.exports = {
         grant: [
           'GM_setValue',
           'GM_getValue'
+        ],
+        require: [
+          'https://code.jquery.com/jquery-3.5.1.min.js'
         ]
       },
       pretty: false,
