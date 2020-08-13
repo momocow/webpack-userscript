@@ -1,4 +1,4 @@
-import * as webpack from 'webpack';
+import {Compiler, Plugin} from 'webpack';
 
 declare namespace WebpackUserscript {
   type WebpackUserscriptOptions =
@@ -206,10 +206,10 @@ declare namespace WebpackUserscript {
   }
 }
 
-declare class WebpackUserscript {
+declare class WebpackUserscript extends Plugin {
   constructor(options?: WebpackUserscript.WebpackUserscriptOptions);
 
-  apply(compiler: webpack.Compiler): void;
+  apply(compiler: Compiler): void;
 }
 
 export = WebpackUserscript;
