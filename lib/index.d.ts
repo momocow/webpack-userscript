@@ -121,21 +121,21 @@ declare namespace WebpackUserscript {
 
     supportURL?: string;
 
-    include?: string | Array<string>;
+    include?: string | string[];
 
-    match?: string | Array<string>;
+    match?: string | string[];
 
-    exclude?: string | Array<string>;
+    exclude?: string | string[];
 
-    require?: string | Array<string>;
+    require?: string | string[];
 
-    resource?: string | Array<string>;
+    resource?: string | string[];
 
-    connect?: string | Array<string>;
+    connect?: string | string[];
 
     'run-at'?: 'document-start' | 'document-body' | 'document-end' | 'document-idle' | 'context-menu';
 
-    grant?: string | Array<string> | 'none';
+    grant?: string | string[] | 'none';
 
     webRequest?: string;
 
