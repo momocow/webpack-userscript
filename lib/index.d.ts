@@ -6,6 +6,44 @@ declare namespace WebpackUserscript {
     | HeaderFile // shorthand for WPUSOptions.headers
     | HeaderProvider; // shorthand for WPUSOptions.headers
 
+  interface ProxyScriptOptions {
+    /**
+     * Filename template of the proxy script.
+     * Defaults to "[basename].proxy.user.js".
+     */
+    filename?: string;
+
+    /**
+     * Base URL of the dev server.
+     * Defaults to "http://localhost:8080/".
+     */
+    baseUrl?: string;
+
+    /**
+     * Enable proxy script generation or not.
+     * Default value depends on whether `process.env.WEBPACK_DEV_SERVER` is `"true"` or not.
+     */
+    enable?: boolean | (() => boolean);
+  }
+
+  interface SsriOptions {
+    /**
+     * URL filters.
+     * Each of them is actually testing against a string compound of the meta field and the URL.
+     * For example, if a header is provided as `{ require: "http://example.com/sth.js" }`,
+     * a string of "// @require http://example.com/sth.js" is tested with the provided filters.
+     */
+    include?: string | RegExp | string[] | RegExp[];
+    exclude?: string | RegExp | string[] | RegExp[];
+
+    /**
+     * @see https://github.com/npm/ssri#--integritystreamopts---integritystream
+     */
+    algorithms?: ('sha256' | 'sha384' | 'sha512')[];
+    integrity?: string;
+    size?: number;
+  }
+
   interface WPUSOptions {
     headers?: HeaderFile | HeaderProvider | HeaderObject;
 
@@ -43,55 +81,19 @@ declare namespace WebpackUserscript {
      * Looks similar to `*.meta.js` but with additional `@require` meta field to include the main userscript.
      * It can be useful if you set TamperMonkey not to cache external files.
      */
-    proxyScript?: {
-      /**
-       * Filename template of the proxy script.
-       * Defaults to "[basename].proxy.user.js".
-       */
-      filename?: string;
-
-      /**
-       * Base URL of the dev server.
-       * Defaults to "http://localhost:8080/".
-       */
-      baseUrl?: string;
-
-      /**
-       * Enable proxy script generation or not.
-       * Default value depends on whether `process.env.WEBPACK_DEV_SERVER` is `"true"` or not.
-       */
-      enable?: boolean | (() => boolean);
-    };
+    proxyScript?: ProxyScriptOptions;
 
     /**
      * Defaults to false.
      */
-    ssri?:
-      | boolean
-      | {
-          /**
-           * URL filters.
-           * Each of them is actually testing against a string compound of the meta field and the URL.
-           * For example, if a header is provided as `{ require: "http://example.com/sth.js" }`,
-           * a string of "// @require http://example.com/sth.js" is tested with the provided filters.
-           */
-          include?: string | RegExp | string[] | RegExp[];
-          exclude?: string | RegExp | string[] | RegExp[];
-
-          /**
-           * @see https://github.com/npm/ssri#--integritystreamopts---integritystream
-           */
-          algorithms?: ('sha256' | 'sha384' | 'sha512')[];
-          integrity?: string;
-          size?: number;
-        };
+    ssri?: boolean | ssriOptions;
   }
 
   type HeaderFile = string;
 
   type HeaderProvider = (data: DataObject) => HeaderObject;
 
-  type HeaderObject = {
+  interface HeaderObject {
     name?: string;
 
     namespace?: string;
@@ -144,9 +146,9 @@ declare namespace WebpackUserscript {
     unwrap?: boolean;
 
     nocompat?: boolean | string;
-  } & {
-    [field: string]: string | string[] | boolean; // For any other field not listed above.;
-  };
+
+    [field: string]: string | string[] | boolean | undefined; // For any other field not listed above.;
+  }
 
   interface DataObject {
     /**
