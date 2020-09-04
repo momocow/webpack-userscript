@@ -86,7 +86,7 @@ declare namespace WebpackUserscript {
     /**
      * Defaults to false.
      */
-    ssri?: boolean | ssriOptions;
+    ssri?: boolean | SsriOptions;
   }
 
   type HeaderFile = string;
