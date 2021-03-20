@@ -51,7 +51,7 @@
     "lodash.pick": "^4.4.0",
     "request": "^2.88.0",
     "schema-utils": "^1.0.0",
-    "ssri": "^7.1.0",
+    "ssri": "^8.0.1",
     "webpack-sources": "^1.4.3"
   },
   "files": [
