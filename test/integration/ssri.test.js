@@ -43,7 +43,7 @@ for (const { name, ssri } of testcases) {
 
     const context = path.resolve(FIXTURE_DIR, name)
 
-    const server = await startHTTPServer(path.join(context, 'assets'))
+    const server = await startHTTPServer(context)
     const { port } = server.address()
     const expectedUserJS = fs.readFileSync(path.join(context, 'expected.user.js'), 'utf8')
       .replace(/@PORT@/g, port)
@@ -60,7 +60,7 @@ for (const { name, ssri } of testcases) {
               `http://localhost:${port}/jquery-3.4.1.min.js`,
               `http://localhost:${port}/index.js`
             ],
-            resource: `http://localhost:${port}/travis-webpack-userscript.svg`
+            resource: `svg http://localhost:${port}/travis-webpack-userscript.svg`
           },
           ssri
         })
