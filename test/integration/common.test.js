@@ -15,6 +15,7 @@ function getWebpackConfig (context) {
 const CONTEXT_LIST = [
   'simple-config',
   'explicit-config',
+  'nested-project/src',
   'headers-json',
   'template-strings',
   'header-provider',

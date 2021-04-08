@@ -10,7 +10,7 @@
   "scripts": {
     "commit": "gitmoji -c",
     "lint": "eslint './**/*.js'",
-    "test": "tape test/**/*.test.js",
+    "test": "tape test/**/*.test.js | tap-difflet",
     "release": "semantic-release"
   },
   "keywords": [
@@ -36,8 +36,9 @@
     "express": "^4.17.1",
     "gitmoji-cli": "^3.2.10",
     "memory-fs": "^0.4.1",
-    "semantic-release": "^17.1.1",
+    "semantic-release": "^17.4.2",
     "semantic-release-gitmoji": "^1.3.4",
+    "tap-difflet": "^0.7.2",
     "tape": "^4.10.1",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10"
@@ -49,9 +50,10 @@
     "@tkausl/userscript-meta": "^1.0.2",
     "dev-null": "^0.1.1",
     "lodash.pick": "^4.4.0",
+    "pkg-up": "^3.1.0",
     "request": "^2.88.0",
     "schema-utils": "^1.0.0",
-    "ssri": "^7.1.0",
+    "ssri": "^8.0.1",
     "webpack-sources": "^1.4.3"
   },
   "files": [
