@@ -7,7 +7,9 @@ const express = require('express')
 
 const WebpackUserscript = require('../..')
 
-const FIXTURE_DIR = path.join(path.dirname(__dirname), 'fixtures')
+const TEST_DIR = path.dirname(__dirname)
+const FIXTURE_DIR = path.join(TEST_DIR, 'fixtures')
+const ASSETS_DIR = path.join(TEST_DIR, 'assets')
 
 async function startHTTPServer (assetsDir) {
   const app = express()
@@ -18,6 +20,9 @@ async function startHTTPServer (assetsDir) {
     server.on('error', (e) => reject(e))
   })
 }
+
+const pServer = startHTTPServer(ASSETS_DIR)
+test.onFinish(async () => (await pServer).close())
 
 const testcases = [
   {
@@ -43,7 +48,7 @@ for (const { name, ssri } of testcases) {
 
     const context = path.resolve(FIXTURE_DIR, name)
 
-    const server = await startHTTPServer(path.join(context, 'assets'))
+    const server = await pServer
     const { port } = server.address()
     const expectedUserJS = fs.readFileSync(path.join(context, 'expected.user.js'), 'utf8')
       .replace(/@PORT@/g, port)
@@ -60,7 +65,7 @@ for (const { name, ssri } of testcases) {
               `http://localhost:${port}/jquery-3.4.1.min.js`,
               `http://localhost:${port}/index.js`
             ],
-            resource: `http://localhost:${port}/travis-webpack-userscript.svg`
+            resource: `svg http://localhost:${port}/travis-webpack-userscript.svg`
           },
           ssri
         })
@@ -102,10 +107,6 @@ for (const { name, ssri } of testcases) {
         'utf8'
       )
       t.same(meta, expectedMetaJS)
-
-      server.close(() => {
-        t.end()
-      })
     })
   })
 }
