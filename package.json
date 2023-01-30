@@ -18,15 +18,15 @@
     "url": "https://github.com/momocow/webpack-userscript/issues"
   },
   "homepage": "https://github.com/momocow/webpack-userscript#readme",
-  "main": "./dist/tsc/main.js",
-  "types": "./dist/tsc/main.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "lint": "eslint lib/ --ext .js,.jsx,.ts,.tsx",
     "test": "jest",
     "clean": "rm -rf dist build package",
     "ts-node": "ts-node",
     "docs": "typedoc --entryPoints lib/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "commit": "gitmoji -c",
     "prepare": "husky install"
   },
