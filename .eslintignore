@@ -1,4 +1,0 @@
-test/assets/
-test/fixtures/**/*.js
-test/**/*.user.js
-node_modules/**/*
