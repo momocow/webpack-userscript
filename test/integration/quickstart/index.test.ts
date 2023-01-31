@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { Configuration } from 'webpack';
+import { UserscriptPlugin } from 'webpack-userscript';
 
 import { Volume } from '../types';
 import { compile, GLOBAL_FIXTURES_DIR } from '../util';
@@ -23,12 +24,12 @@ describe('quickstart', () => {
     };
 
     const entryJs = await fs.readFile(
-      path.resolve(__dirname, GLOBAL_FIXTURES_DIR, 'entry.js'),
+      path.resolve(__dirname, GLOBAL_FIXTURES_DIR, 'entry.js.txt'),
       'utf-8',
     );
 
     entryUserJs = await fs.readFile(
-      path.resolve(__dirname, GLOBAL_FIXTURES_DIR, 'entry.user.js'),
+      path.resolve(__dirname, GLOBAL_FIXTURES_DIR, 'entry.user.js.txt'),
       'utf-8',
     );
 
@@ -44,10 +45,13 @@ describe('quickstart', () => {
   });
 
   it('should successfully compile with default options', async () => {
-    const output = await compile(input, webpackConfig);
+    const output = await compile(input, {
+      ...webpackConfig,
+      plugins: [new UserscriptPlugin()],
+    });
 
     const headersJs = await fs.readFile(
-      path.resolve(__dirname, './fixtures/headers.js'),
+      path.resolve(__dirname, './fixtures/headers.js.txt'),
       'utf-8',
     );
 
