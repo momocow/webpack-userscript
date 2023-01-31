@@ -1,23 +1,24 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { createFsFromVolume, IFs, Volume } from 'memfs';
 import { Configuration } from 'webpack';
 
+import { Volume } from '../types';
 import { compile, GLOBAL_FIXTURES_DIR } from '../util';
 
 describe('quickstart', () => {
   let webpackConfig: Configuration;
-  let ifs: IFs;
+  let input: Volume;
   let entryUserJs: string;
 
   beforeEach(async () => {
     webpackConfig = {
       context: '/',
+      mode: 'production',
       entry: '/entry.js',
       output: {
         path: '/dist',
-        filename: 'quickstart',
+        filename: 'quickstart.js',
       },
     };
 
@@ -36,24 +37,22 @@ describe('quickstart', () => {
       version: '0.0.0',
     });
 
-    ifs = createFsFromVolume(
-      Volume.fromJSON({
-        '/entry.js': entryJs,
-        '/package.json': packageJson,
-      }),
-    );
+    input = Volume.fromJSON({
+      '/entry.js': entryJs,
+      '/package.json': packageJson,
+    });
   });
 
   it('should successfully compile with default options', async () => {
-    const ofs = await compile(ifs, webpackConfig);
+    const output = await compile(input, webpackConfig);
 
     const headersJs = await fs.readFile(
       path.resolve(__dirname, './fixtures/headers.js'),
       'utf-8',
     );
 
-    expect(ofs.toJSON()).toEqual({
-      '/dist/quickstart.user.js': headersJs + '\n\n' + entryUserJs,
+    expect(output.toJSON()).toEqual({
+      '/dist/quickstart.user.js': headersJs + '\n' + entryUserJs,
       '/dist/quickstart.meta.js': headersJs,
     });
   });

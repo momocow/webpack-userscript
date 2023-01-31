@@ -1,17 +1,19 @@
 import path from 'node:path';
 import { promisify } from 'node:util';
 
-import { createFsFromVolume, IFs, Volume } from 'memfs';
+import { createFsFromVolume } from 'memfs';
 import { Configuration, webpack } from 'webpack';
 import { UserscriptOptions, UserscriptPlugin } from 'webpack-userscript';
+
+import { Volume } from './types';
 
 export const GLOBAL_FIXTURES_DIR = path.join(__dirname, 'fixtures');
 
 export async function compile(
-  ifs: IFs,
+  input: Volume,
   webpackConfig: Configuration,
   userscriptOptions?: UserscriptOptions,
-): Promise<IFs> {
+): Promise<Volume> {
   const compiler = webpack({
     ...webpackConfig,
     plugins: [
@@ -20,11 +22,11 @@ export async function compile(
     ],
   });
 
-  const ofs = createFsFromVolume(new Volume());
-  compiler.inputFileSystem = ifs;
-  compiler.outputFileSystem = ofs;
+  const output = new Volume();
+  compiler.inputFileSystem = createFsFromVolume(input);
+  compiler.outputFileSystem = createFsFromVolume(output);
 
-  const stats = await promisify(compiler.run)();
+  const stats = await promisify(compiler.run.bind(compiler))();
 
   if (stats?.hasErrors() || stats?.hasWarnings()) {
     const details = stats.toJson();
@@ -36,5 +38,6 @@ export async function compile(
     }
     throw new Error('invalid fixtures');
   }
-  return ofs;
+
+  return output;
 }
