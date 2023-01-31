@@ -22,8 +22,10 @@
     "outDir": "./dist/",
     "types": ["node", "jest"],
     "lib": ["ES6", "DOM"],
+    "emitDecoratorMetadata": true,
     "paths": {
       "webpack-userscript": ["lib"]
     }
-  }
+  },
+  "include": ["**/*.ts"]
 }
