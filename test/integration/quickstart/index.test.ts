@@ -1,63 +1,29 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-
-import { Configuration } from 'webpack';
 import { UserscriptPlugin } from 'webpack-userscript';
 
 import { Volume } from '../types';
-import { compile, GLOBAL_FIXTURES_DIR } from '../util';
+import { compile } from '../util';
+import { Fixture } from './fixture';
 
 describe('quickstart', () => {
-  let webpackConfig: Configuration;
   let input: Volume;
-  let entryUserJs: string;
 
   beforeEach(async () => {
-    webpackConfig = {
-      context: '/',
-      mode: 'production',
-      entry: '/entry.js',
-      output: {
-        path: '/dist',
-        filename: 'quickstart.js',
-      },
-    };
-
-    const entryJs = await fs.readFile(
-      path.resolve(__dirname, GLOBAL_FIXTURES_DIR, 'entry.js.txt'),
-      'utf-8',
-    );
-
-    entryUserJs = await fs.readFile(
-      path.resolve(__dirname, GLOBAL_FIXTURES_DIR, 'entry.user.js.txt'),
-      'utf-8',
-    );
-
-    const packageJson = JSON.stringify({
-      name: 'quickstart',
-      version: '0.0.0',
-    });
-
     input = Volume.fromJSON({
-      '/entry.js': entryJs,
-      '/package.json': packageJson,
+      '/entry.js': Fixture.entryJs,
+      '/package.json': Fixture.packageJson,
     });
   });
 
   it('should successfully compile with default options', async () => {
     const output = await compile(input, {
-      ...webpackConfig,
+      ...Fixture.webpackConfig,
       plugins: [new UserscriptPlugin()],
     });
 
-    const headersJs = await fs.readFile(
-      path.resolve(__dirname, './fixtures/headers.js.txt'),
-      'utf-8',
-    );
-
     expect(output.toJSON()).toEqual({
-      '/dist/quickstart.user.js': headersJs + '\n' + entryUserJs,
-      '/dist/quickstart.meta.js': headersJs,
+      '/dist/quickstart.user.js':
+        Fixture.headersJs + '\n' + Fixture.entryUserJs,
+      '/dist/quickstart.meta.js': Fixture.headersJs,
     });
   });
 });
