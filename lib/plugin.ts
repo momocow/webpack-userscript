@@ -1,14 +1,19 @@
 import path from 'node:path';
+import { promisify } from 'node:util';
 
 import { Chunk, Compilation, Compiler, sources } from 'webpack';
 
 import { findPackage, FS, readJSON } from './fs';
-import { Headers } from './headers';
+import { Headers, HeadersProps } from './headers';
 
 const { ConcatSource, RawSource } = sources;
 
+export type HeadersProvider = () => HeadersProps | Promise<HeadersProps>;
+export type HeadersFile = string;
+
 export interface UserscriptOptions {
   root?: string;
+  headers?: HeadersProps | HeadersProvider | HeadersFile;
 }
 
 export class UserscriptPlugin {
@@ -48,14 +53,11 @@ export class UserscriptPlugin {
     });
   }
 
-  protected getHeaders(packageJson: PackageJson): Headers {
-    return Headers.fromJSON({ ...packageJson });
+  protected headersFactory(props: HeadersProps): Headers {
+    return Headers.fromJSON(props);
   }
 
-  protected async loadPackageJson(
-    context: string,
-    fs: FS,
-  ): Promise<PackageJson> {
+  protected async loadDefault(context: string, fs: FS): Promise<HeadersProps> {
     try {
       const projectDir = await findPackage(context, fs as FS);
       const packageJson = await readJSON<PackageJson>(
@@ -68,7 +70,7 @@ export class UserscriptPlugin {
         description: packageJson.description,
         author: packageJson.author,
         homepage: packageJson.homepage,
-        bugs:
+        supportURL:
           typeof packageJson.bugs === 'string'
             ? packageJson.bugs
             : typeof packageJson.bugs === 'object' &&
@@ -123,14 +125,39 @@ export class UserscriptPlugin {
 
   private async prepare(params: Compilation['params']): Promise<void> {
     const { context, inputFileSystem } = this.compiler;
-    const { root } = this.options;
+    const { root, headers: headersOptions } = this.options;
 
-    const packageJson = await this.loadPackageJson(
+    const defaultProps = await this.loadDefault(
       root ?? context,
       inputFileSystem as FS,
     );
 
-    const headers = this.getHeaders(packageJson);
+    let headersProps: HeadersProps;
+    if (typeof headersOptions === 'string') {
+      const stat = await promisify(inputFileSystem.stat)(headersOptions);
+      if (!stat?.isFile()) {
+        throw new Error('headers file cannot be found at ' + headersOptions);
+      }
+
+      const buf = await promisify(inputFileSystem.readFile)(headersOptions);
+      try {
+        headersProps = JSON.parse(buf?.toString('utf-8') ?? '');
+      } catch (e) {
+        throw new Error(
+          'headers file is not valid .json format' +
+            (e instanceof Error ? `: ${e.message}` : ''),
+        );
+      }
+    } else if (typeof headersOptions === 'function') {
+      headersProps = await headersOptions();
+    } else {
+      headersProps = headersOptions ?? {};
+    }
+
+    const headers = this.headersFactory({
+      ...defaultProps,
+      ...headersProps,
+    });
 
     this.compilationData.set(params, { headers });
   }
@@ -171,7 +198,7 @@ export interface FileInfo {
   metajsFile: string;
 }
 
-export interface PackageJson {
+interface PackageJson {
   name?: string;
   version?: string;
   description?: string;

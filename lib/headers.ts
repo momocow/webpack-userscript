@@ -1,11 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 
-import {
-  instanceToPlain,
-  plainToInstance,
-  Transform,
-  Type,
-} from 'class-transformer';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -21,15 +16,7 @@ export interface HeadersFactoryOptions {
   strict: boolean;
 }
 
-const TransformArray = (): PropertyDecorator =>
-  Transform(({ value }) => (Array.isArray(value) ? value : [value]));
-
-const TranformObject = (): PropertyDecorator =>
-  Transform(({ value }) =>
-    Array.isArray(value) ? Object.fromEntries(value) : value,
-  );
-
-export enum RunAt {
+export enum RunAtValue {
   DocumentStart = 'document-start',
   DocumentBody = 'document-body',
   DocumentEnd = 'document-end',
@@ -43,161 +30,195 @@ export interface HeadersRenderOptions {
   pretty?: boolean;
 }
 
-export class Headers {
+export type TagType = string;
+export type ValueType =
+  | Record<string, string>
+  | string[]
+  | string
+  | boolean
+  | undefined;
+
+export type SingleValue = string;
+export type MultiValue = string | string[];
+export type NamedValue = Record<string, string>;
+export type SwitchValue = boolean;
+
+export interface HeadersProps {
+  name?: SingleValue;
+  version?: SingleValue;
+  namespace?: SingleValue;
+  author?: SingleValue;
+  description?: SingleValue;
+  homepage?: SingleValue;
+  homepageURL?: SingleValue;
+  website?: SingleValue;
+  source?: SingleValue;
+  icon?: SingleValue;
+  iconURL?: SingleValue;
+  defaulticon?: SingleValue;
+  icon64?: SingleValue;
+  icon64URL?: SingleValue;
+  updateURL?: SingleValue;
+  downloadURL?: SingleValue;
+  installURL?: SingleValue;
+  supportURL?: SingleValue;
+  include?: MultiValue;
+  match?: MultiValue;
+  exclude?: MultiValue;
+  require?: MultiValue;
+  resource?: NamedValue;
+  connect?: MultiValue;
+  grant?: MultiValue;
+  webRequest?: MultiValue;
+  noframes?: SwitchValue;
+  unwrap?: SwitchValue;
+  antifeature?: NamedValue;
+  ['run-at']?: RunAtValue;
+}
+
+export class Headers implements HeadersProps {
   @IsString()
-  public readonly name!: string;
+  public name!: SingleValue;
 
   @IsOptional()
   @IsSemVer()
-  public readonly version?: string;
+  public version?: SingleValue;
 
   @IsOptional()
   @IsString()
-  public readonly namespace?: string;
+  public namespace?: SingleValue;
 
   @IsOptional()
   @IsString()
-  public readonly author?: string;
+  public author?: SingleValue;
 
   @IsOptional()
   @IsString()
-  public readonly description?: string;
+  public description?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly homepage?: string;
+  public homepage?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly homepageURL?: string;
+  public homepageURL?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly website?: string;
+  public website?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly source?: string;
+  public source?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly icon?: string;
+  public icon?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly iconURL?: string;
+  public iconURL?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly defaulticon?: string;
+  public defaulticon?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly icon64?: string;
+  public icon64?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly icon64URL?: string;
+  public icon64URL?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly updateURL?: string;
+  public updateURL?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly downloadURL?: string;
+  public downloadURL?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly installURL?: string;
+  public installURL?: SingleValue;
 
   @IsOptional()
   @IsUrl()
-  public readonly supportURL?: string;
+  public supportURL?: SingleValue;
 
-  @TransformArray()
   @IsOptional()
-  @IsString({ each: true })
-  public readonly include?: Readonly<string[]>;
+  @IsString()
+  public include?: MultiValue;
 
-  @TransformArray()
   @IsOptional()
-  @IsString({ each: true })
-  public readonly match?: Readonly<string[]>;
+  @IsString()
+  public match?: MultiValue;
 
-  @TransformArray()
   @IsOptional()
-  @IsString({ each: true })
-  public readonly exclude?: Readonly<string[]>;
+  @IsString()
+  public exclude?: MultiValue;
 
-  @TransformArray()
   @IsOptional()
-  @IsString({ each: true })
-  public readonly require?: Readonly<string[]>;
+  @IsString()
+  public require?: MultiValue;
 
-  @TranformObject()
   @IsOptional()
   @IsObject()
-  public readonly resource?: Readonly<Record<string, string>>;
+  public resource?: NamedValue;
 
-  @TransformArray()
   @IsOptional()
-  @IsString({ each: true })
-  public readonly connect?: Readonly<string[]>;
+  @IsString()
+  public connect?: MultiValue;
 
-  @TransformArray()
   @IsOptional()
-  @IsString({ each: true })
-  public readonly grant?: Readonly<string[]>;
+  @IsString()
+  public grant?: MultiValue;
 
-  @TransformArray()
   @IsOptional()
-  @IsString({ each: true })
-  public readonly webRequest?: Readonly<string[]>;
+  @IsString()
+  public webRequest?: MultiValue;
 
-  @Type(() => Boolean)
   @IsOptional()
   @IsBoolean()
-  public readonly noframes?: boolean;
+  public noframes?: SwitchValue;
 
-  @Type(() => Boolean)
   @IsOptional()
   @IsBoolean()
-  public readonly unwrap?: boolean;
+  public unwrap?: SwitchValue;
 
-  @TranformObject()
   @IsOptional()
   @IsObject()
-  public readonly antifeature?: Readonly<Record<string, string>>;
+  public antifeature?: NamedValue;
 
   @IsOptional()
-  @IsEnum(RunAt)
-  public readonly ['run-at']?:
-    | 'document-start'
-    | 'document-body'
-    | 'document-end'
-    | 'document-idle'
-    | 'context-menu';
+  @IsEnum(RunAtValue)
+  public ['run-at']?: RunAtValue;
+
+  protected postInit(): void {
+    if (this.include === undefined && this.match === undefined) {
+      this.match = '*://*/*';
+    }
+  }
 
   public render({
     prefix = '// ==UserScript==',
     suffix = '// ==/UserScript==',
   }: HeadersRenderOptions = {}): string {
-    const body = Object.entries(
-      instanceToPlain(this) as Record<
-        string,
-        Record<string, string> | string[] | string | boolean
-      >,
-    )
-      .filter(([, value]) => value !== null && value !== undefined)
+    const obj = instanceToPlain(this, { exposeUnsetFields: false }) as Record<
+      TagType,
+      Exclude<ValueType, undefined>
+    >;
+    const body = Object.entries(obj)
       .map(([tag, value]) => this.renderTag(tag, value))
       .join('\n');
     return [prefix, body, suffix].join('\n');
   }
 
   private renderTag(
-    tag: string,
-    value: Record<string, string> | string[] | string | boolean,
+    tag: TagType,
+    value: Exclude<ValueType, undefined>,
   ): string {
     if (Array.isArray(value)) {
       return value.map((v) => `// @${tag} ${v}`).join('\n');
@@ -217,10 +238,14 @@ export class Headers {
   }
 
   public static fromJSON(
-    obj: unknown,
+    props: HeadersProps,
     { strict }: Partial<HeadersFactoryOptions> = {},
   ): Headers {
-    const headers = plainToInstance(Headers, obj);
+    const headers = plainToInstance(Headers, props, {
+      exposeDefaultValues: true,
+    });
+    headers.postInit();
+
     if (strict) {
       const errors = validateSync(headers, {
         forbidNonWhitelisted: true,
@@ -230,6 +255,7 @@ export class Headers {
         throw new Error(errors.map((err) => err.toString()).join('\n'));
       }
     }
+
     return headers;
   }
 }
