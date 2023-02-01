@@ -1,0 +1,6 @@
+{
+  "name": "userscript",
+  "version": "0.0.0",
+  "description": "this is a fantastic userscript",
+  "someUnrelatedProperty": true
+}

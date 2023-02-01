@@ -4,7 +4,7 @@ import { promisify } from 'node:util';
 import { createFsFromVolume } from 'memfs';
 import { Configuration, webpack } from 'webpack';
 
-import { Volume } from './types';
+import { Volume } from './volume';
 
 export const GLOBAL_FIXTURES_DIR = path.join(__dirname, 'fixtures');
 
