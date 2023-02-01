@@ -11,31 +11,6 @@ export interface UserscriptOptions {
   root?: string;
 }
 
-interface FileInfo {
-  chunk: Chunk;
-  sourceFile: string;
-  userjsFile: string;
-  metajsFile: string;
-}
-
-interface CompilationData {
-  headers: Headers;
-}
-
-interface PackageJson {
-  name?: string;
-  version?: string;
-  description?: string;
-  author?: string;
-  homepage?: string;
-  bugs?: string | { url?: string };
-}
-
-interface PrepareHeadersOptions {
-  context?: string;
-  fs?: FS;
-}
-
 export class UserscriptPlugin {
   public static readonly DEFAULT_OPTIONS: Readonly<UserscriptOptions> = {};
 
@@ -73,26 +48,14 @@ export class UserscriptPlugin {
     });
   }
 
-  private async prepare(params: Compilation['params']): Promise<void> {
-    const { context, inputFileSystem } = this.compiler;
-    const { root } = this.options;
-    const headers = await this.prepareHeaders({
-      context: root ?? context,
-      fs: inputFileSystem as FS,
-    });
-    this.compilationData.set(params, { headers });
-  }
-
-  private async prepareHeaders({
-    context,
-    fs,
-  }: PrepareHeadersOptions): Promise<Headers> {
-    const packageJson =
-      context && fs ? await this.loadPackageJson(context, fs) : {};
+  protected getHeaders(packageJson: PackageJson): Headers {
     return Headers.fromJSON({ ...packageJson });
   }
 
-  private async loadPackageJson(context: string, fs: FS): Promise<PackageJson> {
+  protected async loadPackageJson(
+    context: string,
+    fs: FS,
+  ): Promise<PackageJson> {
     try {
       const projectDir = await findPackage(context, fs as FS);
       const packageJson = await readJSON<PackageJson>(
@@ -118,42 +81,7 @@ export class UserscriptPlugin {
     }
   }
 
-  private emit(compilation: Compilation): void {
-    const data = this.compilationData.get(compilation.params);
-
-    if (!data) return;
-
-    const fileInfo = this.analyzeFileInfo(compilation);
-    this.emitAssets(compilation, fileInfo, data.headers);
-  }
-
-  private emitAssets(
-    compilation: Compilation,
-    fileInfo: FileInfo[],
-    headers: Headers,
-  ): void {
-    for (const { sourceFile, chunk, metajsFile, userjsFile } of fileInfo) {
-      const headersStr = headers.render();
-
-      compilation.updateAsset(
-        sourceFile,
-        (source) => {
-          return new ConcatSource(headersStr, '\n', source);
-        },
-        {
-          related: { metajs: metajsFile },
-        },
-      );
-      compilation.renameAsset(sourceFile, userjsFile);
-      compilation.emitAsset(metajsFile, new RawSource(headersStr), {
-        // prevent metajs from optimization
-        minimized: true,
-      });
-      chunk.auxiliaryFiles.add(metajsFile);
-    }
-  }
-
-  private analyzeFileInfo(compilation: Compilation): FileInfo[] {
+  protected analyzeFileInfo(compilation: Compilation): FileInfo[] {
     const fileInfo: FileInfo[] = [];
 
     for (const entrypoint of compilation.entrypoints.values()) {
@@ -192,4 +120,66 @@ export class UserscriptPlugin {
 
     return fileInfo;
   }
+
+  private async prepare(params: Compilation['params']): Promise<void> {
+    const { context, inputFileSystem } = this.compiler;
+    const { root } = this.options;
+
+    const packageJson = await this.loadPackageJson(
+      root ?? context,
+      inputFileSystem as FS,
+    );
+
+    const headers = this.getHeaders(packageJson);
+
+    this.compilationData.set(params, { headers });
+  }
+
+  private emit(compilation: Compilation): void {
+    const data = this.compilationData.get(compilation.params);
+
+    if (!data) return;
+
+    const fileInfo = this.analyzeFileInfo(compilation);
+
+    for (const { sourceFile, chunk, metajsFile, userjsFile } of fileInfo) {
+      const headersStr = data.headers.render();
+
+      compilation.updateAsset(
+        sourceFile,
+        (source) => {
+          return new ConcatSource(headersStr, '\n', source);
+        },
+        {
+          related: { metajs: metajsFile },
+        },
+      );
+      compilation.renameAsset(sourceFile, userjsFile);
+      compilation.emitAsset(metajsFile, new RawSource(headersStr), {
+        // prevent metajs from optimization
+        minimized: true,
+      });
+      chunk.auxiliaryFiles.add(metajsFile);
+    }
+  }
+}
+
+export interface FileInfo {
+  chunk: Chunk;
+  sourceFile: string;
+  userjsFile: string;
+  metajsFile: string;
+}
+
+export interface PackageJson {
+  name?: string;
+  version?: string;
+  description?: string;
+  author?: string;
+  homepage?: string;
+  bugs?: string | { url?: string };
+}
+
+interface CompilationData {
+  headers: Headers;
 }
