@@ -1,5 +1,6 @@
-const { pathsToModuleNameMapper } = require('ts-jest');
+import { pathsToModuleNameMapper } from 'ts-jest';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { compilerOptions } = require('./tsconfig.json');
 
 module.exports = {
@@ -17,4 +18,6 @@ module.exports = {
   },
   modulePaths: [compilerOptions.baseUrl],
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
+  setupFiles: ['./test/setup.ts'],
+  setupFilesAfterEnv: ['jest-extended/all'],
 };

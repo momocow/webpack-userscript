@@ -8,7 +8,9 @@ import { GlobalFixtures } from '../fixtures';
 export class Fixtures extends GlobalFixtures {
   @Memoize()
   public static get headersJson(): string {
-    return readFileSync(path.join(__dirname, 'headers.json.txt'), 'utf-8');
+    return JSON.stringify({
+      name: 'headers-file',
+    });
   }
 
   @Memoize()
