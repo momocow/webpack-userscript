@@ -40,7 +40,51 @@ describe('load-headers', () => {
     });
   });
 
-  it.todo('can be loaded from headers provider function');
+  it('can be loaded from headers provider function', async () => {
+    const output = await compile(input, {
+      context: '/',
+      mode: 'production',
+      entry: '/entry.js',
+      output: {
+        path: '/dist',
+        filename: 'headers.js',
+      },
+      plugins: [
+        new UserscriptPlugin({
+          headers: (): Record<string, string> => ({
+            name: 'headers-provider',
+          }),
+        }),
+      ],
+    });
 
-  it.todo('can be loaded from headers file');
+    expect(output.toJSON()).toEqual({
+      '/dist/headers.user.js':
+        Fixtures.headersProviderHeaders + '\n' + Fixtures.entryMinJs,
+      '/dist/headers.meta.js': Fixtures.headersProviderHeaders,
+    });
+  });
+
+  it('can be loaded from headers file', async () => {
+    const output = await compile(input, {
+      context: '/',
+      mode: 'production',
+      entry: '/entry.js',
+      output: {
+        path: '/dist',
+        filename: 'headers.js',
+      },
+      plugins: [
+        new UserscriptPlugin({
+          headers: '/headers.json',
+        }),
+      ],
+    });
+
+    expect(output.toJSON()).toEqual({
+      '/dist/headers.user.js':
+        Fixtures.headersFileHeaders + '\n' + Fixtures.entryMinJs,
+      '/dist/headers.meta.js': Fixtures.headersFileHeaders,
+    });
+  });
 });

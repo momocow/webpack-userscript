@@ -1,0 +1,6 @@
+// ==UserScript==
+// @name headers-provider
+// @version 0.0.0
+// @description this is a fantastic userscript
+// @match *://*/*
+// ==/UserScript==

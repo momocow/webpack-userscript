@@ -18,4 +18,20 @@ export class Fixtures extends GlobalFixtures {
       'utf-8',
     );
   }
+
+  @Memoize()
+  public static get headersProviderHeaders(): string {
+    return readFileSync(
+      path.join(__dirname, 'headers-provider.headers.txt'),
+      'utf-8',
+    );
+  }
+
+  @Memoize()
+  public static get headersFileHeaders(): string {
+    return readFileSync(
+      path.join(__dirname, 'headers-file.headers.txt'),
+      'utf-8',
+    );
+  }
 }
