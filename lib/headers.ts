@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 
-import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -43,7 +43,7 @@ export type MultiValue = string | string[];
 export type NamedValue = Record<string, string>;
 export type SwitchValue = boolean;
 
-export interface HeadersProps {
+export interface StrictHeadersProps {
   name?: SingleValue;
   version?: SingleValue;
   namespace?: SingleValue;
@@ -76,122 +76,156 @@ export interface HeadersProps {
   ['run-at']?: RunAtValue;
 }
 
-export class Headers implements HeadersProps {
+export interface HeadersProps extends StrictHeadersProps {
+  [tag: TagType]: ValueType;
+}
+
+export class Headers implements StrictHeadersProps {
+  @Expose()
   @IsString()
   public name!: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsSemVer()
   public version?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsString()
   public namespace?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsString()
   public author?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsString()
   public description?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public homepage?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public homepageURL?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public website?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public source?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public icon?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public iconURL?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public defaulticon?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public icon64?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public icon64URL?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public updateURL?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public downloadURL?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public installURL?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsUrl()
   public supportURL?: SingleValue;
 
+  @Expose()
   @IsOptional()
   @IsString()
   public include?: MultiValue;
 
+  @Expose()
   @IsOptional()
   @IsString()
   public match?: MultiValue;
 
+  @Expose()
   @IsOptional()
   @IsString()
   public exclude?: MultiValue;
 
+  @Expose()
   @IsOptional()
   @IsString()
   public require?: MultiValue;
 
+  @Expose()
   @IsOptional()
   @IsObject()
   public resource?: NamedValue;
 
+  @Expose()
   @IsOptional()
   @IsString()
   public connect?: MultiValue;
 
+  @Expose()
   @IsOptional()
   @IsString()
   public grant?: MultiValue;
 
+  @Expose()
   @IsOptional()
   @IsString()
   public webRequest?: MultiValue;
 
+  @Expose()
   @IsOptional()
   @IsBoolean()
   public noframes?: SwitchValue;
 
+  @Expose()
   @IsOptional()
   @IsBoolean()
   public unwrap?: SwitchValue;
 
+  @Expose()
   @IsOptional()
   @IsObject()
   public antifeature?: NamedValue;
 
+  @Expose()
   @IsOptional()
   @IsEnum(RunAtValue)
   public ['run-at']?: RunAtValue;
@@ -239,10 +273,11 @@ export class Headers implements HeadersProps {
 
   public static fromJSON(
     props: HeadersProps,
-    { strict }: Partial<HeadersFactoryOptions> = {},
+    { strict = false }: Partial<HeadersFactoryOptions> = {},
   ): Headers {
     const headers = plainToInstance(Headers, props, {
       exposeDefaultValues: true,
+      excludeExtraneousValues: strict,
     });
     headers.postInit();
 

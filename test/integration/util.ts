@@ -33,3 +33,7 @@ export async function compile(
 
   return output;
 }
+
+export function escapeRegex(str: string): string {
+  return str.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
+}
