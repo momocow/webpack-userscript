@@ -7,26 +7,10 @@ import { Headers, HeadersProps } from './headers';
 
 const { ConcatSource, RawSource } = sources;
 
-export type HeadersProvider = (
-  ...args: any[]
-) => HeadersProps | Promise<HeadersProps>;
-export type HeadersFile = string;
-
-export interface UserscriptOptions {
-  root?: string;
-  headers?: HeadersProps | HeadersProvider | HeadersFile;
-}
-
 export class UserscriptPlugin {
   public static readonly DEFAULT_OPTIONS: Readonly<UserscriptOptions> = {};
 
-  private compiler!: Compiler;
-
-  private readonly compilationData = new WeakMap<
-    Compilation['params'],
-    CompilationData
-  >();
-  // private readonly headersCache = new WeakMap<Source, CacheEntry>();
+  // protected readonly headersCache = new WeakMap<Source, CacheEntry>();
 
   public constructor(
     public options: UserscriptOptions = {
@@ -35,21 +19,36 @@ export class UserscriptPlugin {
   ) {}
 
   public apply(compiler: Compiler): void {
-    this.compiler = compiler;
-
     const PLUGIN = this.constructor.name;
+    const compilationData = new WeakMap<
+      Compilation['params'],
+      CompilationData
+    >();
 
-    compiler.hooks.beforeCompile.tapPromise(PLUGIN, async (params) =>
-      this.prepare(params),
-    );
+    compiler.hooks.beforeCompile.tapPromise(PLUGIN, async (params) => {
+      const data = await this.prepare(
+        compiler.context,
+        compiler.inputFileSystem as FsReadFile & FsStat,
+      );
+      compilationData.set(params, data);
+    });
 
-    compiler.hooks.compilation.tap(PLUGIN, (compilation) => {
+    compiler.hooks.compilation.tap(PLUGIN, (compilation, params) => {
       compilation.hooks.processAssets.tapPromise(
         {
           name: PLUGIN,
           stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
         },
-        () => this.emit(compilation),
+        async () => {
+          const data = compilationData.get(params);
+          if (!data) return;
+
+          await this.emit(
+            compilation,
+            data,
+            compilation.inputFileSystem as FsReadFile,
+          );
+        },
       );
     });
   }
@@ -60,7 +59,7 @@ export class UserscriptPlugin {
 
   protected async loadDefault(
     context: string,
-    fs: Compiler['inputFileSystem'],
+    fs: FsStat & FsReadFile,
   ): Promise<HeadersProps> {
     try {
       const projectDir = await findPackage(context, fs as FsStat);
@@ -87,44 +86,44 @@ export class UserscriptPlugin {
     }
   }
 
-  private async prepare(params: Compilation['params']): Promise<void> {
-    const { context, inputFileSystem } = this.compiler;
-    const { root, headers: headersOptions } = this.options;
-
-    const headersProps = await this.loadDefault(
-      root ?? context,
-      inputFileSystem,
-    );
-
-    let headersProviders: HeadersProvider | undefined;
-
-    if (typeof headersOptions === 'string') {
-      Object.assign(
-        headersProps,
-        await readJSON<HeadersProps>(
-          headersOptions,
-          inputFileSystem as FsReadFile,
-        ),
-      );
-    } else if (typeof headersOptions === 'function') {
-      headersProviders = headersOptions;
-    } else {
-      Object.assign(headersProps, headersOptions);
+  protected async resolveHeadersOption(
+    headersOption: HeadersOption,
+    fileInfo: FileInfo,
+    fs: FsReadFile,
+  ): Promise<HeadersProps> {
+    if (typeof headersOption === 'string') {
+      return await readJSON<HeadersProps>(headersOption, fs);
     }
 
-    this.compilationData.set(params, { headersProps, headersProviders });
+    if (typeof headersOption === 'function') {
+      return await headersOption(fileInfo);
+    }
+
+    return headersOption ?? {};
   }
 
-  private async emit(compilation: Compilation): Promise<void> {
-    const data = this.compilationData.get(compilation.params);
+  protected async prepare(
+    context: string,
+    fs: FsStat & FsReadFile,
+  ): Promise<CompilationData> {
+    const headersProps = await this.loadDefault(
+      this.options.root ?? context,
+      fs,
+    );
 
-    if (!data) return;
+    return { headersProps };
+  }
 
+  protected async emit(
+    compilation: Compilation,
+    data: CompilationData,
+    fs: FsReadFile,
+  ): Promise<void> {
     const fileInfoList = this.analyzeFileInfo(compilation);
 
     await Promise.all(
       fileInfoList.map((fileInfo) =>
-        this.emitAssets(compilation, fileInfo, data),
+        this.emitAssets(compilation, data, fileInfo, fs),
       ),
     );
 
@@ -133,7 +132,7 @@ export class UserscriptPlugin {
     }
   }
 
-  private analyzeFileInfo(compilation: Compilation): FileInfo[] {
+  protected analyzeFileInfo(compilation: Compilation): FileInfo[] {
     const fileInfo: FileInfo[] = [];
 
     for (const entrypoint of compilation.entrypoints.values()) {
@@ -178,16 +177,24 @@ export class UserscriptPlugin {
     return fileInfo;
   }
 
-  private async emitAssets(
+  protected async emitAssets(
     compilation: Compilation,
-    fileInfo: FileInfo,
     data: CompilationData,
+    fileInfo: FileInfo,
+    fs: FsReadFile,
   ): Promise<void> {
+    const { headers: headersOption } = this.options;
     const { file, chunk, metajsFile, userjsFile } = fileInfo;
+
+    const headersProps = await this.resolveHeadersOption(
+      headersOption,
+      fileInfo,
+      fs,
+    );
 
     const headers = this.headersFactory({
       ...data.headersProps,
-      ...(await data.headersProviders?.(fileInfo)),
+      ...headersProps,
     });
     const headersStr = headers.render();
 
@@ -214,6 +221,22 @@ export class UserscriptPlugin {
   }
 }
 
+export interface UserscriptOptions {
+  root?: string;
+  headers?: HeadersOption;
+}
+
+export type HeadersProvider = (
+  fileInfo: FileInfo,
+) => HeadersProps | Promise<HeadersProps>;
+export type HeadersFile = string;
+
+export type HeadersOption =
+  | HeadersProps
+  | HeadersProvider
+  | HeadersFile
+  | undefined;
+
 export interface FileInfo {
   chunk: Chunk;
   file: string;
@@ -237,5 +260,4 @@ interface PackageJson {
 
 interface CompilationData {
   headersProps: HeadersProps;
-  headersProviders?: HeadersProvider;
 }
