@@ -20,6 +20,9 @@ describe('package-json', () => {
       JSON.stringify({
         name: 'package-json-deep',
         version: '0.0.1',
+        description: 'description of package-json-deep',
+        author: 'author of package-json-deep',
+        homepage: 'https://homepage.package-json-deep.com/',
       }),
     );
     input.writeFileSync(
@@ -27,6 +30,9 @@ describe('package-json', () => {
       JSON.stringify({
         name: 'package-json',
         version: '0.0.0',
+        description: 'description of package-json',
+        author: 'author of package-json',
+        homepage: 'https://homepage.package-json.com/',
       }),
     );
 
