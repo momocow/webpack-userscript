@@ -27,7 +27,7 @@ describe('quickstart', () => {
     });
 
     expect(output.toJSON()).toEqual({
-      '/dist/quickstart.user.js': Fixtures.headers + '\n' + Fixtures.entryMinJs,
+      '/dist/quickstart.user.js': Fixtures.entryUserJs(Fixtures.headers),
       '/dist/quickstart.meta.js': Fixtures.headers,
     });
   });

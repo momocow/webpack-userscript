@@ -33,13 +33,3 @@ export async function compile(
 
   return output;
 }
-
-export class FixtureBase {
-  protected static readonly globalFixturesDir = path.join(
-    __dirname,
-    'fixtures',
-  );
-
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  protected constructor() {}
-}

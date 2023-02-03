@@ -52,9 +52,44 @@ describe('package-json', () => {
     });
 
     expect(output.toJSON()).toEqual({
-      '/dist/package-json.user.js':
-        Fixtures.rootOptionHeaders + '\n' + Fixtures.entryMinJs,
+      '/dist/package-json.user.js': Fixtures.entryUserJs(
+        Fixtures.rootOptionHeaders,
+      ),
       '/dist/package-json.meta.js': Fixtures.rootOptionHeaders,
     });
+  });
+
+  describe('various types of "bugs" in package.json', () => {
+    const bugsValues = [
+      'https://bugs.example.com/',
+      { url: 'https://bugs.example.com/' },
+    ];
+
+    for (const bugs of bugsValues) {
+      it('should parse "bugs" into "supportURL"', async () => {
+        input.writeFileSync(
+          '/package.json',
+          JSON.stringify({ name: 'package-json-bugs', bugs }),
+        );
+
+        const output = await compile(input, {
+          context: '/',
+          mode: 'production',
+          entry: '/entry.js',
+          output: {
+            path: '/dist',
+            filename: 'package-json-bugs.js',
+          },
+          plugins: [new UserscriptPlugin({})],
+        });
+
+        expect(output.toJSON()).toEqual({
+          '/dist/package-json-bugs.user.js': Fixtures.entryUserJs(
+            Fixtures.bugsHeaders,
+          ),
+          '/dist/package-json-bugs.meta.js': Fixtures.bugsHeaders,
+        });
+      });
+    }
   });
 });

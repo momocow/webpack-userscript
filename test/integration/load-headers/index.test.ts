@@ -34,8 +34,9 @@ describe('load-headers', () => {
     });
 
     expect(output.toJSON()).toEqual({
-      '/dist/load-headers.user.js':
-        Fixtures.headersObjectHeaders + '\n' + Fixtures.entryMinJs,
+      '/dist/load-headers.user.js': Fixtures.entryUserJs(
+        Fixtures.headersObjectHeaders,
+      ),
       '/dist/load-headers.meta.js': Fixtures.headersObjectHeaders,
     });
   });
@@ -59,8 +60,9 @@ describe('load-headers', () => {
     });
 
     expect(output.toJSON()).toEqual({
-      '/dist/load-headers.user.js':
-        Fixtures.headersProviderHeaders + '\n' + Fixtures.entryMinJs,
+      '/dist/load-headers.user.js': Fixtures.entryUserJs(
+        Fixtures.headersProviderHeaders,
+      ),
       '/dist/load-headers.meta.js': Fixtures.headersProviderHeaders,
     });
   });
@@ -82,8 +84,9 @@ describe('load-headers', () => {
     });
 
     expect(output.toJSON()).toEqual({
-      '/dist/load-headers.user.js':
-        Fixtures.headersFileHeaders + '\n' + Fixtures.entryMinJs,
+      '/dist/load-headers.user.js': Fixtures.entryUserJs(
+        Fixtures.headersFileHeaders,
+      ),
       '/dist/load-headers.meta.js': Fixtures.headersFileHeaders,
     });
   });

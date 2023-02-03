@@ -1,59 +1,33 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { Memoize } from 'typescript-memoize';
+export const FIXTURES_DIR = path.join(__dirname, 'fixtures');
 
-import { FixtureBase } from './util';
+export const File =
+  (...paths: string[]): PropertyDecorator =>
+  (target, prop) => {
+    Object.defineProperty(target, prop, {
+      value: readFileSync(path.join(...paths), 'utf-8'),
+      enumerable: true,
+      configurable: false,
+      writable: false,
+    });
+  };
 
-export class GlobalFixtures extends FixtureBase {
-  @Memoize()
-  public static get entryJs(): string {
-    return readFileSync(
-      path.resolve(__dirname, this.globalFixturesDir, 'entry.js.txt'),
-      'utf-8',
-    );
-  }
+export class GlobalFixtures {
+  @File(FIXTURES_DIR, 'entry.js.txt')
+  public static readonly entryJs: string;
 
-  @Memoize()
-  public static get entryMinJs(): string {
-    return readFileSync(
-      path.resolve(__dirname, this.globalFixturesDir, 'entry.min.js.txt'),
-      'utf-8',
-    );
-  }
+  @File(FIXTURES_DIR, 'entry.min.js.txt')
+  public static readonly entryMinJs: string;
 
-  @Memoize()
-  public static get headers(): string {
-    return readFileSync(
-      path.resolve(__dirname, this.globalFixturesDir, 'headers.txt'),
-      'utf-8',
-    );
-  }
+  @File(FIXTURES_DIR, 'headers.txt')
+  public static readonly headers: string;
 
-  @Memoize()
-  public static get packageJson(): string {
-    return JSON.stringify(this.packageInfo);
-  }
+  @File(FIXTURES_DIR, 'package.json.txt')
+  public static readonly packageJson: string;
 
-  @Memoize()
-  public static get packageInfo(): Record<string, unknown> {
-    return {
-      ...this.basePackageInfo,
-      ...this.additionalPackageInfo,
-    };
-  }
-
-  @Memoize()
-  public static get basePackageInfo(): Record<string, unknown> {
-    return JSON.parse(
-      readFileSync(
-        path.resolve(__dirname, this.globalFixturesDir, 'package.json.txt'),
-        'utf-8',
-      ),
-    );
-  }
-
-  protected static get additionalPackageInfo(): Record<string, unknown> {
-    return {};
+  public static entryUserJs(headers: string): string {
+    return headers + '\n' + this.entryMinJs;
   }
 }

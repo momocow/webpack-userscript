@@ -1,16 +1,9 @@
-import fs from 'node:fs';
-import path from 'node:path';
-
-import { Memoize } from 'typescript-memoize';
-
-import { GlobalFixtures } from '../fixtures';
+import { File, GlobalFixtures } from '../fixtures';
 
 export class Fixtures extends GlobalFixtures {
-  @Memoize()
-  public static get rootOptionHeaders(): string {
-    return fs.readFileSync(
-      path.resolve(__dirname, './root-option.headers.txt'),
-      'utf-8',
-    );
-  }
+  @File(__dirname, './root-option.headers.txt')
+  public static readonly rootOptionHeaders: string;
+
+  @File(__dirname, './bugs.headers.txt')
+  public static readonly bugsHeaders: string;
 }
