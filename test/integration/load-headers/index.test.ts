@@ -10,7 +10,6 @@ describe('load-headers', () => {
   beforeEach(async () => {
     input = Volume.fromJSON({
       '/entry.js': Fixtures.entryJs,
-      '/headers.json': Fixtures.headersJson,
       '/package.json': Fixtures.packageJson,
     });
   });
@@ -22,59 +21,33 @@ describe('load-headers', () => {
       entry: '/entry.js',
       output: {
         path: '/dist',
-        filename: 'load-headers.js',
+        filename: 'output.js',
       },
       plugins: [
         new UserscriptPlugin({
           headers: {
-            name: 'headers-object',
+            name: 'load-headers',
           },
         }),
       ],
     });
 
     expect(output.toJSON()).toEqual({
-      '/dist/load-headers.user.js': Fixtures.entryUserJs(
-        Fixtures.headersObjectHeaders,
-      ),
-      '/dist/load-headers.meta.js': Fixtures.headersObjectHeaders,
-    });
-  });
-
-  it('can be loaded from headers provider function', async () => {
-    const output = await compile(input, {
-      context: '/',
-      mode: 'production',
-      entry: '/entry.js',
-      output: {
-        path: '/dist',
-        filename: 'load-headers.js',
-      },
-      plugins: [
-        new UserscriptPlugin({
-          headers: (): Record<string, string> => ({
-            name: 'headers-provider',
-          }),
-        }),
-      ],
-    });
-
-    expect(output.toJSON()).toEqual({
-      '/dist/load-headers.user.js': Fixtures.entryUserJs(
-        Fixtures.headersProviderHeaders,
-      ),
-      '/dist/load-headers.meta.js': Fixtures.headersProviderHeaders,
+      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.loadHeadersHeaders),
+      '/dist/output.meta.js': Fixtures.loadHeadersHeaders,
     });
   });
 
   it('can be loaded from headers file', async () => {
+    input.writeFileSync('/headers.json', Fixtures.headersJson);
+
     const output = await compile(input, {
       context: '/',
       mode: 'production',
       entry: '/entry.js',
       output: {
         path: '/dist',
-        filename: 'load-headers.js',
+        filename: 'output.js',
       },
       plugins: [
         new UserscriptPlugin({
@@ -84,10 +57,8 @@ describe('load-headers', () => {
     });
 
     expect(output.toJSON()).toEqual({
-      '/dist/load-headers.user.js': Fixtures.entryUserJs(
-        Fixtures.headersFileHeaders,
-      ),
-      '/dist/load-headers.meta.js': Fixtures.headersFileHeaders,
+      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.loadHeadersHeaders),
+      '/dist/output.meta.js': Fixtures.loadHeadersHeaders,
     });
   });
 
@@ -100,7 +71,7 @@ describe('load-headers', () => {
       entry: '/entry.js',
       output: {
         path: '/dist',
-        filename: 'load-headers.js',
+        filename: 'output.js',
       },
       plugins: [
         new UserscriptPlugin({
@@ -110,5 +81,59 @@ describe('load-headers', () => {
     });
 
     await expect(promise).toReject();
+  });
+
+  describe('headers provider', () => {
+    it('can be loaded from headers provider function', async () => {
+      const output = await compile(input, {
+        context: '/',
+        mode: 'production',
+        entry: '/entry.js',
+        output: {
+          path: '/dist',
+          filename: 'output.js',
+        },
+        plugins: [
+          new UserscriptPlugin({
+            headers: (): Record<string, string> => ({
+              name: 'load-headers',
+            }),
+          }),
+        ],
+      });
+
+      expect(output.toJSON()).toEqual({
+        '/dist/output.user.js': Fixtures.entryUserJs(
+          Fixtures.loadHeadersHeaders,
+        ),
+        '/dist/output.meta.js': Fixtures.loadHeadersHeaders,
+      });
+    });
+
+    it('can be loaded from async headers provider function', async () => {
+      const output = await compile(input, {
+        context: '/',
+        mode: 'production',
+        entry: '/entry.js',
+        output: {
+          path: '/dist',
+          filename: 'output.js',
+        },
+        plugins: [
+          new UserscriptPlugin({
+            headers: async (): Promise<Record<string, string>> => ({
+              name: 'load-headers',
+            }),
+          }),
+        ],
+      });
+
+      expect(output.toJSON()).toEqual({
+        '/dist/output.user.js': Fixtures.entryUserJs(
+          Fixtures.loadHeadersHeaders,
+        ),
+        '/dist/output.meta.js': Fixtures.loadHeadersHeaders,
+      });
+    });
   });
 });

@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name headers-object
+// @name entry3
 // @version 0.0.0
 // @description this is a fantastic userscript
 // @match *://*/*

@@ -42,7 +42,7 @@ describe('package-json', () => {
       entry: '/entry.js',
       output: {
         path: '/dist',
-        filename: 'package-json.js',
+        filename: 'output.js',
       },
       plugins: [
         new UserscriptPlugin({
@@ -52,10 +52,8 @@ describe('package-json', () => {
     });
 
     expect(output.toJSON()).toEqual({
-      '/dist/package-json.user.js': Fixtures.entryUserJs(
-        Fixtures.rootOptionHeaders,
-      ),
-      '/dist/package-json.meta.js': Fixtures.rootOptionHeaders,
+      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.rootOptionHeaders),
+      '/dist/output.meta.js': Fixtures.rootOptionHeaders,
     });
   });
 
@@ -78,16 +76,14 @@ describe('package-json', () => {
           entry: '/entry.js',
           output: {
             path: '/dist',
-            filename: 'package-json-bugs.js',
+            filename: 'output.js',
           },
           plugins: [new UserscriptPlugin({})],
         });
 
         expect(output.toJSON()).toEqual({
-          '/dist/package-json-bugs.user.js': Fixtures.entryUserJs(
-            Fixtures.bugsHeaders,
-          ),
-          '/dist/package-json-bugs.meta.js': Fixtures.bugsHeaders,
+          '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.bugsHeaders),
+          '/dist/output.meta.js': Fixtures.bugsHeaders,
         });
       });
     }

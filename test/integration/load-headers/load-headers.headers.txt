@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name headers-provider
+// @name load-headers
 // @version 0.0.0
 // @description this is a fantastic userscript
 // @match *://*/*
