@@ -1,9 +1,8 @@
 import path from 'node:path';
-import { promisify } from 'node:util';
 
 import { Chunk, Compilation, Compiler, sources } from 'webpack';
 
-import { findPackage, FS, readJSON } from './fs';
+import { findPackage, FsReadFile, FsStat, readJSON } from './fs';
 import { Headers, HeadersProps } from './headers';
 
 const { ConcatSource, RawSource } = sources;
@@ -57,12 +56,15 @@ export class UserscriptPlugin {
     return Headers.fromJSON(props);
   }
 
-  protected async loadDefault(context: string, fs: FS): Promise<HeadersProps> {
+  protected async loadDefault(
+    context: string,
+    fs: Compiler['inputFileSystem'],
+  ): Promise<HeadersProps> {
     try {
-      const projectDir = await findPackage(context, fs as FS);
+      const projectDir = await findPackage(context, fs as FsStat);
       const packageJson = await readJSON<PackageJson>(
         path.join(projectDir, 'package.json'),
-        fs,
+        fs as FsReadFile,
       );
       return {
         name: packageJson.name,
@@ -83,7 +85,50 @@ export class UserscriptPlugin {
     }
   }
 
-  protected analyzeFileInfo(compilation: Compilation): FileInfo[] {
+  private async prepare(params: Compilation['params']): Promise<void> {
+    const { context, inputFileSystem } = this.compiler;
+    const { root, headers: headersOptions } = this.options;
+
+    const defaultProps = await this.loadDefault(
+      root ?? context,
+      inputFileSystem,
+    );
+    const headersProps = await this.resolveHeadersOptions(headersOptions);
+    const headers = this.headersFactory({
+      ...defaultProps,
+      ...headersProps,
+    });
+
+    this.compilationData.set(params, { headers });
+  }
+
+  private async resolveHeadersOptions(
+    headersOptions: UserscriptOptions['headers'],
+  ): Promise<HeadersProps> {
+    const { inputFileSystem } = this.compiler;
+    if (typeof headersOptions === 'string') {
+      return await readJSON<HeadersProps>(
+        headersOptions,
+        inputFileSystem as FsReadFile,
+      );
+    } else if (typeof headersOptions === 'function') {
+      return await headersOptions();
+    } else {
+      return headersOptions ?? {};
+    }
+  }
+
+  private emit(compilation: Compilation): void {
+    const data = this.compilationData.get(compilation.params);
+
+    if (!data) return;
+
+    for (const fileInfo of this.analyzeFileInfo(compilation)) {
+      this.emitAssets(compilation, fileInfo, data);
+    }
+  }
+
+  private analyzeFileInfo(compilation: Compilation): FileInfo[] {
     const fileInfo: FileInfo[] = [];
 
     for (const entrypoint of compilation.entrypoints.values()) {
@@ -123,71 +168,28 @@ export class UserscriptPlugin {
     return fileInfo;
   }
 
-  private async prepare(params: Compilation['params']): Promise<void> {
-    const { context, inputFileSystem } = this.compiler;
-    const { root, headers: headersOptions } = this.options;
+  private emitAssets(
+    compilation: Compilation,
+    { sourceFile, chunk, metajsFile, userjsFile }: FileInfo,
+    data: CompilationData,
+  ): void {
+    const headersStr = data.headers.render();
 
-    const defaultProps = await this.loadDefault(
-      root ?? context,
-      inputFileSystem as FS,
+    compilation.updateAsset(
+      sourceFile,
+      (source) => {
+        return new ConcatSource(headersStr, '\n', source);
+      },
+      {
+        related: { metajs: metajsFile },
+      },
     );
-
-    let headersProps: HeadersProps;
-    if (typeof headersOptions === 'string') {
-      const stat = await promisify(inputFileSystem.stat)(headersOptions);
-      if (!stat?.isFile()) {
-        throw new Error('headers file cannot be found at ' + headersOptions);
-      }
-
-      const buf = await promisify(inputFileSystem.readFile)(headersOptions);
-      try {
-        headersProps = JSON.parse(buf?.toString('utf-8') ?? '');
-      } catch (e) {
-        throw new Error(
-          'headers file is not valid .json format' +
-            (e instanceof Error ? `: ${e.message}` : ''),
-        );
-      }
-    } else if (typeof headersOptions === 'function') {
-      headersProps = await headersOptions();
-    } else {
-      headersProps = headersOptions ?? {};
-    }
-
-    const headers = this.headersFactory({
-      ...defaultProps,
-      ...headersProps,
+    compilation.renameAsset(sourceFile, userjsFile);
+    compilation.emitAsset(metajsFile, new RawSource(headersStr), {
+      // prevent metajs from optimization
+      minimized: true,
     });
-
-    this.compilationData.set(params, { headers });
-  }
-
-  private emit(compilation: Compilation): void {
-    const data = this.compilationData.get(compilation.params);
-
-    if (!data) return;
-
-    const fileInfo = this.analyzeFileInfo(compilation);
-
-    for (const { sourceFile, chunk, metajsFile, userjsFile } of fileInfo) {
-      const headersStr = data.headers.render();
-
-      compilation.updateAsset(
-        sourceFile,
-        (source) => {
-          return new ConcatSource(headersStr, '\n', source);
-        },
-        {
-          related: { metajs: metajsFile },
-        },
-      );
-      compilation.renameAsset(sourceFile, userjsFile);
-      compilation.emitAsset(metajsFile, new RawSource(headersStr), {
-        // prevent metajs from optimization
-        minimized: true,
-      });
-      chunk.auxiliaryFiles.add(metajsFile);
-    }
+    chunk.auxiliaryFiles.add(metajsFile);
   }
 }
 

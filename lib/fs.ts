@@ -6,11 +6,23 @@ import _fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 
-export type FS = typeof _fs;
+export interface FsStat {
+  stat(
+    path: string,
+    callback: (err: Error | null, stats: { isFile: () => boolean }) => void,
+  ): void;
+}
+
+export interface FsReadFile {
+  readFile(
+    path: string,
+    callback: (err: Error | null, content: Buffer) => void,
+  ): void;
+}
 
 export async function findPackage(
   cwd: string,
-  fs: Pick<FS, 'stat'> = _fs,
+  fs: FsStat = _fs,
 ): Promise<string> {
   const statAsync = promisify(fs.stat);
 
@@ -34,9 +46,9 @@ export async function findPackage(
 
 export async function readJSON<T>(
   file: string,
-  fs: Pick<FS, 'readFile'> = _fs,
+  fs: FsReadFile = _fs,
 ): Promise<T> {
   const readfileAsync = promisify(fs.readFile);
-  const buf = await readfileAsync(file, 'utf-8');
-  return JSON.parse(buf);
+  const buf = await readfileAsync(file);
+  return JSON.parse(buf.toString('utf-8'));
 }
