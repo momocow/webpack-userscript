@@ -6,4 +6,6 @@ export class Fixtures extends GlobalFixtures {
   public static readonly httpsMatchValue = 'https://*/*';
 
   public static readonly httpsIncludeValue = 'https://*';
+
+  public static readonly customValue = '__custom__';
 }

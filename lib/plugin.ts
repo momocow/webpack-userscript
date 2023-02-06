@@ -3,7 +3,14 @@ import path from 'node:path';
 import { AsyncSeriesWaterfallHook } from 'tapable';
 import { Compilation, Compiler, sources } from 'webpack';
 
-import { findPackage, FsReadFile, FsStat, readJSON } from './fs';
+import {
+  findPackage,
+  FsExists,
+  FsReadFile,
+  FsStat,
+  isFile,
+  readJSON,
+} from './fs';
 import { Headers, HeadersImpl, HeadersProps } from './headers';
 import {
   resolveDownloadBaseUrl,
@@ -12,7 +19,12 @@ import {
   wrapHook,
 } from './hooks';
 import { processSSRI } from './ssri';
-import { FileInfo, HeadersWaterfall, UserscriptOptions } from './types';
+import {
+  FileInfo,
+  HeadersWaterfall,
+  SSRIMap,
+  UserscriptOptions,
+} from './types';
 
 const { ConcatSource, RawSource } = sources;
 
@@ -40,7 +52,7 @@ export class UserscriptPlugin {
     compiler.hooks.beforeCompile.tapPromise(PLUGIN, async (params) => {
       const data = await this.prepare(
         compiler.context,
-        compiler.inputFileSystem as FsReadFile & FsStat,
+        compiler.inputFileSystem as FsReadFile & FsStat & FsExists,
       );
       compilationData.set(params, data);
     });
@@ -78,10 +90,10 @@ export class UserscriptPlugin {
 
   protected async loadDefault(
     context: string,
-    fs: FsStat & FsReadFile,
+    fs: FsStat & FsReadFile & FsExists,
   ): Promise<HeadersProps> {
     try {
-      const projectDir = await findPackage(context, fs as FsStat);
+      const projectDir = await findPackage(context, fs);
       const packageJson = await readJSON<PackageJson>(
         path.join(projectDir, 'package.json'),
         fs as FsReadFile,
@@ -107,9 +119,9 @@ export class UserscriptPlugin {
 
   protected async prepare(
     context: string,
-    fs: FsStat & FsReadFile,
+    fs: FsStat & FsReadFile & FsExists,
   ): Promise<CompilationData> {
-    const { root, headers } = this.options;
+    const { root, headers, ssri } = this.options;
 
     const headersProps = await this.loadDefault(root ?? context, fs);
 
@@ -119,7 +131,36 @@ export class UserscriptPlugin {
       Object.assign(headersProps, headers);
     }
 
-    return { headers: this.headersFactory(headersProps) };
+    let ssriMap: SSRIMap | undefined;
+    if ((typeof ssri === 'object' && ssri.lock) || ssri) {
+      const lockfile =
+        ssri === true ||
+        typeof ssri.lock == 'boolean' ||
+        ssri.lock === undefined
+          ? path.join(root ?? context, './ssri-lock.json')
+          : ssri.lock;
+
+      ssriMap = await this.readSSRILockFile(lockfile, fs);
+    }
+
+    return { headers: this.headersFactory(headersProps), ssriMap };
+  }
+
+  protected async readSSRILockFile(
+    file: string,
+    fs: FsReadFile & FsExists,
+  ): Promise<SSRIMap> {
+    await isFile(file, fs);
+    const json = await readJSON<Record<string, Record<string, string>>>(
+      file,
+      fs,
+    );
+    return new Map(
+      Object.entries(json).map(([url, ssriMap]) => [
+        url,
+        new Map(Object.entries(ssriMap)),
+      ]),
+    ) as SSRIMap;
   }
 
   protected async emit(
@@ -192,6 +233,7 @@ export class UserscriptPlugin {
     const { headers } = await this.hooks.processHeaders.promise({
       headers: data.headers,
       fileInfo,
+      compilation,
       options: this.options,
     });
 
@@ -231,4 +273,5 @@ interface PackageJson {
 
 interface CompilationData {
   headers: Headers;
+  ssriMap?: SSRIMap;
 }

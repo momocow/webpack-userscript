@@ -17,6 +17,7 @@ import {
 
 export interface HeadersFactoryOptions {
   strict: boolean;
+  whitelist: boolean;
 }
 
 export enum RunAtValue {
@@ -282,22 +283,24 @@ export class HeadersImpl implements StrictHeadersProps {
 
   public static fromJSON<T extends HeadersImpl>(
     props: HeadersProps,
-    { strict = false }: Partial<HeadersFactoryOptions> = {},
+    { strict = false, whitelist = false }: Partial<HeadersFactoryOptions> = {},
   ): Readonly<T> {
     const headers = plainToInstance(
       this as unknown as ClassConstructor<T>,
       props,
       {
         exposeDefaultValues: true,
-        excludeExtraneousValues: strict,
+        excludeExtraneousValues: whitelist,
       },
     );
 
     if (strict) {
       const errors = validateSync(headers, {
-        forbidNonWhitelisted: true,
+        forbidNonWhitelisted: whitelist,
+        whitelist,
         stopAtFirstError: false,
       });
+
       if (errors.length > 0) {
         throw new Error(errors.map((err) => err.toString()).join('\n'));
       }

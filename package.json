@@ -60,6 +60,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "node-fetch": "^3.3.0",
+    "p-limit": "^4.0.0",
     "reflect-metadata": "^0.1.13",
     "ssri": "^10.0.1",
     "table": "^6.8.1",

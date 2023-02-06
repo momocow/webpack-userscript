@@ -1,140 +1,202 @@
+import path from 'node:path';
+
 import fetch from 'node-fetch';
-import { fromStream } from 'ssri';
+import pLimit from 'p-limit';
+import { fromStream, Hash } from 'ssri';
 import { Readable } from 'stream';
 import { URL } from 'url';
 
+import { FsReadFile, FsWriteFile, readJSON, writeJSON } from './fs';
+import { Headers } from './headers';
 import {
   ProcessHeadersAsyncHook,
+  SSRIAlgorithm,
   SSRIOptions,
   SSRITag,
-  URLFilter,
 } from './types';
 
-const DEFAULT_SSRI_OPTIONS: SSRIOptions = {};
+export const SSRI_MAP: Map<string, Map<SSRIAlgorithm, string>> = new Map();
+
+const concurrency = parseInt(process.env.WPUS_SSRI_CONCURRENCY ?? '');
+const limit = pLimit(Number.isNaN(concurrency) ? 6 : concurrency);
 
 export const processSSRI: ProcessHeadersAsyncHook = async ({
   headers,
-  options: { ssri: _ssri },
+  compilation: {
+    compiler: { inputFileSystem, outputFileSystem },
+  },
+  options: { ssri },
 }) => {
-  const ssri: SSRIOptions = _ssri === true ? DEFAULT_SSRI_OPTIONS : _ssri;
+  const ssriOptions: SSRIOptions =
+    ssri === true || ssri === undefined ? {} : ssri;
 
-  const filters = {
-    include: ssri?.include ?? [],
-    exclude: ssri?.exclude ?? [],
-  };
+  // const lockfile =
+  //   ssriOptions.lock === true || ssriOptions.lock === undefined
+  //     ? path.join(root ?? context, './ssri-lock.json')
+  //     : ssriOptions.lock;
 
-  const ssriOptions = {};
+  const urlMap = getTargetURLs(headers, ssriOptions);
+  Array.from(urlMap.values()).map((url) => [
+    url.toString(),
+    new Map(buildSSRIEntries(url)),
+  ]);
 
-  const urls = new Set(
-    [
-      ...(headers.require ?? []),
-      ...Object.values(headers.resource ?? {}),
-    ].filter((url) => filterURL(url)),
+  // restore ssri-lock.json
+  let urlSSRIMap =
+    lockfile !== false
+      ? await readSSRILockFile(lockfile, inputFileSystem as FsReadFile)
+      : new Map<string, Map<SSRIAlgorithm, string>>();
+
+  // restore url-ssri-map
+  urlSSRIMap = new Map(
+    Array.from(urlSSRIMap).map(([url, ssriMap]) => [
+      url,
+      new Map([...ssriMap, ...buildSSRIEntries(new URL(url))]),
+    ]),
   );
 
-  // headers = headers.update({
-  //   require:,
-  //   resource:,
-  // })
+  // .filter((map) => ssriOptions.algorithms?.filter((alg) => !map.has(alg)));
 
-  // const urlFilters = _pick(ssriOptions, ['include', 'exclude']);
-  // const integrityOptions = _pick(ssriOptions, [
-  //   'algorithms',
-  //   'integrity',
-  //   'size',
-  // ]);
+  const computations = Array.from(urlMap.values()).map((url) =>
+    limit(async () => {
+      const ssriMap = buildSSRIMap(url);
+      const missingAlgorithms = ssriOptions.algorithms?.filter(
+        (alg) => !ssriMap.has(alg),
+      );
+      const newSSRIMap = await computeSSRI(url, {
+        strict: ssriOptions.strict,
+        algorithms: missingAlgorithms,
+      });
 
-  // tplHeaderObj.require = !tplHeaderObj.require
-  //   ? []
-  //   : !Array.isArray(tplHeaderObj.require)
-  //   ? [tplHeaderObj.require]
-  //   : tplHeaderObj.require;
-  // tplHeaderObj.resource = !tplHeaderObj.resource
-  //   ? []
-  //   : !Array.isArray(tplHeaderObj.resource)
-  //   ? [tplHeaderObj.resource]
-  //   : tplHeaderObj.resource;
+      return [url.toString(), new Map([...ssriMap, ...newSSRIMap])] as const;
+    }),
+  );
 
-  // const effectiveUrls = new Set();
-  // tplHeaderObj.require = await Promise.all(
-  //   tplHeaderObj.require.map((url) => {
-  //     effectiveUrls.add(url);
-  //     if (!(url in this.ssriCache)) {
-  //       this.ssriCache[url] = computeSSRI(
-  //         url,
-  //         'require',
-  //         urlFilters,
-  //         integrityOptions,
-  //       );
-  //     }
-  //     return this.ssriCache[url];
-  //   }),
+  // const urlSSRIMap = new Map(await Promise.all(computations));
+
+  if (ssriOptions.lock) {
+    const file =
+      typeof ssriOptions.lock === 'string'
+        ? ssriOptions.lock
+        : './ssri-lock.json';
+    await writeSSRILockFile(file, urlSSRIMap, outputFileSystem as FsWriteFile);
+  }
+
+  // const ssri = await Promise.all(
+  //   Array.from(urlSet).map((url) => appendSSRI(url, ssriOptions)),
   // );
-
-  // tplHeaderObj.resource = await Promise.all(
-  //   tplHeaderObj.resource.map((url) => {
-  //     let name;
-  //     if (url.match(/^\w+\s+https?:\/\/.*/)) {
-  //       [name, url] = url.split(/\s+/);
-  //     }
-
-  //     effectiveUrls.add(url);
-  //     if (!(url in this.ssriCache)) {
-  //       this.ssriCache[url] = computeSSRI(
-  //         url,
-  //         'resource',
-  //         urlFilters,
-  //         integrityOptions,
-  //       ).then((urlSSRI) => [name, urlSSRI].join(' '));
-  //     }
-  //     return this.ssriCache[url];
-  //   }),
-  // );
-
-  // for (const url in this.ssriCache) {
-  //   if (!effectiveUrls.has(url)) {
-  //     delete this.ssriCache[url];
-  //   }
-  // }
 };
 
-const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
+export function normalizeURL(url: URL): string {
+  const u = new URL('', url);
+  u.hash = '';
+  return u.toString();
+}
+
+export function getTargetURLs(
+  headers: Headers,
+  options: Pick<SSRIOptions, 'include' | 'exclude'>,
+): Map<string, URL> {
+  const urlMap = new Map<string, URL>();
+
+  if (headers.require !== undefined) {
+    const requireURLs = Array.isArray(headers.require)
+      ? headers.require
+      : [headers.require];
+
+    for (const urlStr of requireURLs) {
+      const url = new URL(urlStr);
+      if (filterURL(url, 'require', options)) {
+        urlMap.set(urlStr, url);
+      }
+    }
+  }
+
+  if (headers.resource !== undefined) {
+    for (const urlStr of Object.values(headers.resource)) {
+      const url = new URL(urlStr);
+      if (filterURL(url, 'resource', options)) {
+        urlMap.set(urlStr, url);
+      }
+    }
+  }
+
+  return urlMap;
+}
+
+export const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 export function filterURL(
+  url: URL,
   tag: SSRITag,
-  url: string,
-  { include, exclude }: { include?: URLFilter; exclude?: URLFilter } = {},
+  { include, exclude }: Pick<SSRIOptions, 'include' | 'exclude'> = {},
 ): boolean {
-  const urlObj = new URL(url);
-
-  if (!ALLOWED_PROTOCOLS.has(urlObj.protocol)) {
+  if (!ALLOWED_PROTOCOLS.has(url.protocol)) {
     return false;
   }
 
-  if (include && !include(tag, urlObj)) {
+  if (include && !include(tag, url)) {
     return false;
   }
 
-  if (exclude && exclude(tag, urlObj)) {
+  if (exclude && exclude(tag, url)) {
     return false;
   }
 
   return true;
 }
 
+export const SPEC_ALGORITHMS = new Set(['sha256', 'sha384', 'sha512']);
+
+export function buildSSRIEntries(url: URL): [SSRIAlgorithm, string][] {
+  return url.hash
+    .replace(/^#/, '')
+    .split(/[,;]/)
+    .map((sri) => sri.split(/=(.*)/) as [string, string])
+    .filter((entries): entries is [SSRIAlgorithm, string] =>
+      SPEC_ALGORITHMS.has(entries[0]),
+    );
+}
+
 export async function computeSSRI(
-  url: string,
+  url: URL,
   { algorithms, strict }: SSRIOptions,
-): Promise<string> {
-  const response = await fetch(url);
+): Promise<Map<SSRIAlgorithm, string>> {
+  if (!algorithms || algorithms.length === 0) return new Map();
+
+  const response = await fetch(url.toString());
+
   if (response.body === null)
     throw new Error(
       `Null response body received when computing SSRI. ` +
         `${response.status} ${response.statusText} ${url}`,
     );
+
   const integrity = await fromStream(response.body as Readable, {
     algorithms,
     strict,
   });
-  return integrity.toString({ sep: ',' });
+
+  return new Map(
+    algorithms.map((alg) => [
+      alg,
+      integrity[alg]
+        .map((hash) => Hash.prototype.toString.call(hash, { strict }))
+        .join(','),
+    ]),
+  );
+}
+
+export async function writeSSRILockFile(
+  file: string,
+  urlSSRIMap: Map<string, Map<SSRIAlgorithm, string>>,
+  fs: FsWriteFile,
+): Promise<void> {
+  const json = Object.fromEntries(
+    Array.from(urlSSRIMap).map(([url, ssriMap]) => [
+      url,
+      Object.fromEntries(ssriMap),
+    ]),
+  );
+  await writeJSON(file, JSON.stringify(json), fs);
 }

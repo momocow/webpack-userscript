@@ -1,5 +1,5 @@
 import { URL } from 'url';
-import { Chunk } from 'webpack';
+import { Chunk, Compilation } from 'webpack';
 
 import { Headers, HeadersProps } from './headers';
 
@@ -7,6 +7,8 @@ export interface UserscriptOptions {
   root?: string;
   metajs?: boolean;
   headers?: HeadersOption;
+  strict?: boolean;
+  whitelist?: boolean;
   downloadBaseUrl?: string;
   updateBaseUrl?: string;
   ssri?: true | SSRIOptions;
@@ -34,6 +36,7 @@ export interface SSRIOptions {
   algorithms?: SSRIAlgorithm[];
   integrity?: string;
   strict?: boolean;
+  lock?: boolean | string;
 }
 
 export interface FileInfo {
@@ -43,10 +46,14 @@ export interface FileInfo {
   metajsFile: string;
 }
 
+export type SSRIMap = Map<string, Map<SSRIAlgorithm, string>>;
+
 export interface HeadersWaterfall {
   headers: Headers;
   fileInfo: FileInfo;
+  compilation: Compilation;
   options: UserscriptOptions;
+  ssriMap: SSRIMap;
 }
 
 export type ProcessHeadersHook = (data: HeadersWaterfall) => Headers;
