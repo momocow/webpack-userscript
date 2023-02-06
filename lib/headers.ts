@@ -1,6 +1,9 @@
-import { isDeepStrictEqual } from 'node:util';
-
-import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
+import {
+  ClassConstructor,
+  Expose,
+  instanceToPlain,
+  plainToInstance,
+} from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -80,160 +83,170 @@ export interface HeadersProps extends StrictHeadersProps {
   [tag: TagType]: ValueType;
 }
 
-export class Headers implements StrictHeadersProps {
+export type Headers = Readonly<HeadersImpl>;
+
+export class HeadersImpl implements StrictHeadersProps {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  protected constructor() {}
+
   @Expose()
   @IsString()
-  public name!: SingleValue;
+  public readonly name!: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsSemVer()
-  public version?: SingleValue;
+  public readonly version?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsString()
-  public namespace?: SingleValue;
+  public readonly namespace?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsString()
-  public author?: SingleValue;
+  public readonly author?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsString()
-  public description?: SingleValue;
+  public readonly description?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public homepage?: SingleValue;
+  public readonly homepage?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public homepageURL?: SingleValue;
+  public readonly homepageURL?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public website?: SingleValue;
+  public readonly website?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public source?: SingleValue;
+  public readonly source?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public icon?: SingleValue;
+  public readonly icon?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public iconURL?: SingleValue;
+  public readonly iconURL?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public defaulticon?: SingleValue;
+  public readonly defaulticon?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public icon64?: SingleValue;
+  public readonly icon64?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public icon64URL?: SingleValue;
+  public readonly icon64URL?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public updateURL?: SingleValue;
+  public readonly updateURL?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public downloadURL?: SingleValue;
+  public readonly downloadURL?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public installURL?: SingleValue;
+  public readonly installURL?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsUrl()
-  public supportURL?: SingleValue;
+  public readonly supportURL?: SingleValue;
 
   @Expose()
   @IsOptional()
   @IsString()
-  public include?: MultiValue;
+  public readonly include?: MultiValue;
 
   @Expose()
   @IsOptional()
   @IsString()
-  public match?: MultiValue;
+  public readonly match?: MultiValue;
 
   @Expose()
   @IsOptional()
   @IsString()
-  public exclude?: MultiValue;
+  public readonly exclude?: MultiValue;
 
   @Expose()
   @IsOptional()
   @IsString()
-  public require?: MultiValue;
+  public readonly require?: MultiValue;
 
   @Expose()
   @IsOptional()
   @IsObject()
-  public resource?: NamedValue;
+  public readonly resource?: NamedValue;
 
   @Expose()
   @IsOptional()
   @IsString()
-  public connect?: MultiValue;
+  public readonly connect?: MultiValue;
 
   @Expose()
   @IsOptional()
   @IsString()
-  public grant?: MultiValue;
+  public readonly grant?: MultiValue;
 
   @Expose()
   @IsOptional()
   @IsString()
-  public webRequest?: MultiValue;
+  public readonly webRequest?: MultiValue;
 
   @Expose()
   @IsOptional()
   @IsBoolean()
-  public noframes?: SwitchValue;
+  public readonly noframes?: SwitchValue;
 
   @Expose()
   @IsOptional()
   @IsBoolean()
-  public unwrap?: SwitchValue;
+  public readonly unwrap?: SwitchValue;
 
   @Expose()
   @IsOptional()
   @IsObject()
-  public antifeature?: NamedValue;
+  public readonly antifeature?: NamedValue;
 
   @Expose()
   @IsOptional()
   @IsEnum(RunAtValue)
-  public ['run-at']?: RunAtValue;
+  public readonly ['run-at']?: RunAtValue;
 
-  protected postInit(): void {
-    if (this.include === undefined && this.match === undefined) {
-      this.match = '*://*/*';
-    }
+  public toJSON(): HeadersProps {
+    return instanceToPlain(this, { exposeUnsetFields: false });
+  }
+
+  public update(props: HeadersProps): Headers {
+    return (this.constructor as typeof HeadersImpl).fromJSON({
+      ...this.toJSON(),
+      ...props,
+    });
   }
 
   public render({
@@ -250,7 +263,7 @@ export class Headers implements StrictHeadersProps {
     return [prefix, body, suffix].join('\n');
   }
 
-  private renderTag(
+  protected renderTag(
     tag: TagType,
     value: Exclude<ValueType, undefined>,
   ): string {
@@ -267,19 +280,18 @@ export class Headers implements StrictHeadersProps {
     return `// @${tag} ${String(value)}`;
   }
 
-  public equals(other: Headers): boolean {
-    return isDeepStrictEqual(this, other);
-  }
-
-  public static fromJSON(
+  public static fromJSON<T extends HeadersImpl>(
     props: HeadersProps,
     { strict = false }: Partial<HeadersFactoryOptions> = {},
-  ): Headers {
-    const headers = plainToInstance(Headers, props, {
-      exposeDefaultValues: true,
-      excludeExtraneousValues: strict,
-    });
-    headers.postInit();
+  ): Readonly<T> {
+    const headers = plainToInstance(
+      this as unknown as ClassConstructor<T>,
+      props,
+      {
+        exposeDefaultValues: true,
+        excludeExtraneousValues: strict,
+      },
+    );
 
     if (strict) {
       const errors = validateSync(headers, {

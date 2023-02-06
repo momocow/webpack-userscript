@@ -1,14 +1,26 @@
 import path from 'node:path';
 
-import { Chunk, Compilation, Compiler, sources } from 'webpack';
+import { AsyncSeriesWaterfallHook } from 'tapable';
+import { Compilation, Compiler, sources } from 'webpack';
 
 import { findPackage, FsReadFile, FsStat, readJSON } from './fs';
-import { Headers, HeadersProps } from './headers';
+import { Headers, HeadersImpl, HeadersProps } from './headers';
+import {
+  resolveDownloadBaseUrl,
+  resolveUpdateBaseUrl,
+  setDefaultMatch,
+  wrapHook,
+} from './hooks';
+import { processSSRI } from './ssri';
+import { FileInfo, HeadersWaterfall, UserscriptOptions } from './types';
 
 const { ConcatSource, RawSource } = sources;
 
 export class UserscriptPlugin {
   public static readonly DEFAULT_OPTIONS: Readonly<UserscriptOptions> = {};
+  public readonly hooks = {
+    processHeaders: new AsyncSeriesWaterfallHook<HeadersWaterfall>(['headers']),
+  };
 
   // protected readonly headersCache = new WeakMap<Source, CacheEntry>();
 
@@ -43,18 +55,25 @@ export class UserscriptPlugin {
           const data = compilationData.get(params);
           if (!data) return;
 
-          await this.emit(
-            compilation,
-            data,
-            compilation.inputFileSystem as FsReadFile,
-          );
+          await this.emit(compilation, data);
         },
       );
     });
+
+    this.hooks.processHeaders.tap(PLUGIN, wrapHook(setDefaultMatch));
+    if (this.options.downloadBaseUrl !== undefined) {
+      this.hooks.processHeaders.tap(PLUGIN, wrapHook(resolveDownloadBaseUrl));
+    }
+    if (this.options.updateBaseUrl !== undefined) {
+      this.hooks.processHeaders.tap(PLUGIN, wrapHook(resolveUpdateBaseUrl));
+    }
+    if (this.options.ssri) {
+      this.hooks.processHeaders.tapPromise(PLUGIN, wrapHook(processSSRI));
+    }
   }
 
   protected headersFactory(props: HeadersProps): Headers {
-    return Headers.fromJSON(props);
+    return HeadersImpl.fromJSON(props);
   }
 
   protected async loadDefault(
@@ -86,49 +105,37 @@ export class UserscriptPlugin {
     }
   }
 
-  protected async resolveHeadersOption(
-    headersOption: HeadersOption,
-    fileInfo: FileInfo,
-    fs: FsReadFile,
-  ): Promise<HeadersProps> {
-    if (typeof headersOption === 'string') {
-      return await readJSON<HeadersProps>(headersOption, fs);
-    }
-
-    if (typeof headersOption === 'function') {
-      return await headersOption(fileInfo);
-    }
-
-    return headersOption ?? {};
-  }
-
   protected async prepare(
     context: string,
     fs: FsStat & FsReadFile,
   ): Promise<CompilationData> {
-    const headersProps = await this.loadDefault(
-      this.options.root ?? context,
-      fs,
-    );
+    const { root, headers } = this.options;
 
-    return { headersProps };
+    const headersProps = await this.loadDefault(root ?? context, fs);
+
+    if (typeof headers === 'string') {
+      Object.assign(headersProps, await readJSON<HeadersProps>(headers, fs));
+    } else if (typeof headers === 'object') {
+      Object.assign(headersProps, headers);
+    }
+
+    return { headers: this.headersFactory(headersProps) };
   }
 
   protected async emit(
     compilation: Compilation,
     data: CompilationData,
-    fs: FsReadFile,
   ): Promise<void> {
     const fileInfoList = this.analyzeFileInfo(compilation);
 
     await Promise.all(
       fileInfoList.map((fileInfo) =>
-        this.emitAssets(compilation, data, fileInfo, fs),
+        this.emitAssets(compilation, data, fileInfo),
       ),
     );
 
-    for (const { file } of fileInfoList) {
-      compilation.deleteAsset(file);
+    for (const { originalFile } of fileInfoList) {
+      compilation.deleteAsset(originalFile);
     }
   }
 
@@ -137,13 +144,13 @@ export class UserscriptPlugin {
 
     for (const entrypoint of compilation.entrypoints.values()) {
       const chunk = entrypoint.getEntrypointChunk();
-      for (const file of chunk.files) {
-        let q = file.indexOf('?');
+      for (const originalFile of chunk.files) {
+        let q = originalFile.indexOf('?');
         if (q < 0) {
-          q = file.length;
+          q = originalFile.length;
         }
-        const filename = file.slice(0, q);
-        const query = file.slice(q);
+        const filename = originalFile.slice(0, q);
+        const query = originalFile.slice(q);
         const extname = path.extname(filename);
 
         if (extname !== '.js') {
@@ -162,14 +169,9 @@ export class UserscriptPlugin {
 
         fileInfo.push({
           chunk,
-          file,
+          originalFile,
           userjsFile,
           metajsFile,
-          filename,
-          basename,
-          query,
-          extname,
-          dirname,
         });
       }
     }
@@ -181,24 +183,21 @@ export class UserscriptPlugin {
     compilation: Compilation,
     data: CompilationData,
     fileInfo: FileInfo,
-    fs: FsReadFile,
   ): Promise<void> {
     const { headers: headersOption } = this.options;
-    const { file, chunk, metajsFile, userjsFile } = fileInfo;
+    if (typeof headersOption === 'function') {
+      data.headers = data.headers.update(await headersOption(fileInfo));
+    }
 
-    const headersProps = await this.resolveHeadersOption(
-      headersOption,
+    const { headers } = await this.hooks.processHeaders.promise({
+      headers: data.headers,
       fileInfo,
-      fs,
-    );
-
-    const headers = this.headersFactory({
-      ...data.headersProps,
-      ...headersProps,
+      options: this.options,
     });
-    const headersStr = headers.render();
 
-    const sourceAsset = compilation.getAsset(file);
+    const { originalFile, chunk, metajsFile, userjsFile } = fileInfo;
+    const headersStr = headers.render();
+    const sourceAsset = compilation.getAsset(originalFile);
     if (!sourceAsset) {
       return;
     }
@@ -221,34 +220,6 @@ export class UserscriptPlugin {
   }
 }
 
-export interface UserscriptOptions {
-  root?: string;
-  headers?: HeadersOption;
-}
-
-export type HeadersProvider = (
-  fileInfo: FileInfo,
-) => HeadersProps | Promise<HeadersProps>;
-export type HeadersFile = string;
-
-export type HeadersOption =
-  | HeadersProps
-  | HeadersProvider
-  | HeadersFile
-  | undefined;
-
-export interface FileInfo {
-  chunk: Chunk;
-  file: string;
-  filename: string;
-  basename: string;
-  query: string;
-  extname: string;
-  dirname: string;
-  userjsFile: string;
-  metajsFile: string;
-}
-
 interface PackageJson {
   name?: string;
   version?: string;
@@ -259,5 +230,5 @@ interface PackageJson {
 }
 
 interface CompilationData {
-  headersProps: HeadersProps;
+  headers: Headers;
 }
