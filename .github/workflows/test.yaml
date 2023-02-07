@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Test
 
 on:
   - push
@@ -6,7 +6,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
