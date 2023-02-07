@@ -31,9 +31,13 @@
     "docs": "typedoc --entryPoints lib/index.ts",
     "build": "tsc -p tsconfig.build.json",
     "commit": "gitmoji -c",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "release": "semantic-release"
   },
   "devDependencies": {
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^8.0.7",
+    "@semantic-release/npm": "^9.0.2",
     "@types/jest": "^29.4.0",
     "@types/node": "^18.11.18",
     "@types/node-fetch": "^2.6.2",
@@ -53,6 +57,8 @@
     "lint-staged": "^13.1.0",
     "memfs": "^3.4.13",
     "prettier": "^2.8.3",
+    "semantic-release": "^20.1.0",
+    "semantic-release-gitmoji": "^1.6.3",
     "shx": "^0.3.4",
     "ts-jest": "^29.0.5",
     "ts-node": "^10.9.1",
