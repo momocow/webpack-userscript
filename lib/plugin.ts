@@ -3,7 +3,7 @@ import path from 'node:path';
 import { AsyncSeriesWaterfallHook } from 'tapable';
 import { Compilation, Compiler, sources } from 'webpack';
 
-import { findPackage, FsReadFile, FsStat, readJSON } from './fs';
+import { findPackage, FsReadFile, FsStat, readJSON, writeJSON } from './fs';
 import { Headers, HeadersImpl, HeadersProps } from './headers';
 import {
   resolveDownloadBaseUrl,
@@ -37,32 +37,28 @@ export class UserscriptPlugin {
 
   public apply(compiler: Compiler): void {
     const PLUGIN = this.constructor.name;
-    const compilationData = new WeakMap<
-      Compilation['params'],
-      CompilationData
-    >();
+    let compilerData: CompilerData | undefined;
 
-    compiler.hooks.beforeCompile.tapPromise(PLUGIN, async (params) => {
-      const data = await this.prepare(
-        compiler.context,
-        compiler.inputFileSystem as FsReadFile & FsStat,
-      );
-      compilationData.set(params, data);
+    compiler.hooks.beforeCompile.tapPromise(PLUGIN, async () => {
+      compilerData = await this.prepare(compiler);
     });
 
-    compiler.hooks.compilation.tap(PLUGIN, (compilation, params) => {
+    compiler.hooks.compilation.tap(PLUGIN, (compilation) => {
       compilation.hooks.processAssets.tapPromise(
         {
           name: PLUGIN,
           stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
         },
         async () => {
-          const data = compilationData.get(params);
-          if (!data) return;
-
-          await this.emit(compilation, data);
+          if (!compilerData) return;
+          await this.emit(compilation, compilerData);
         },
       );
+    });
+
+    compiler.hooks.shutdown.tapPromise(PLUGIN, async () => {
+      if (!compilerData) return;
+      await this.shutdown(compiler, compilerData);
     });
 
     this.hooks.processHeaders.tap(PLUGIN, wrapHook(setDefaultMatch));
@@ -81,15 +77,19 @@ export class UserscriptPlugin {
     return HeadersImpl.fromJSON(props);
   }
 
-  protected async loadDefault(
-    context: string,
-    fs: FsStat & FsReadFile,
-  ): Promise<HeadersProps> {
+  protected async loadDefault({
+    context,
+    inputFileSystem,
+  }: Compiler): Promise<HeadersProps> {
+    const { root } = this.options;
     try {
-      const projectDir = await findPackage(context, fs);
+      const projectDir = await findPackage(
+        root ?? context,
+        inputFileSystem as FsStat,
+      );
       const packageJson = await readJSON<PackageJson>(
         path.join(projectDir, 'package.json'),
-        fs as FsReadFile,
+        inputFileSystem as FsReadFile,
       );
       return {
         name: packageJson.name,
@@ -110,23 +110,24 @@ export class UserscriptPlugin {
     }
   }
 
-  protected async prepare(
-    context: string,
-    fs: FsStat & FsReadFile,
-  ): Promise<CompilationData> {
+  protected async prepare(compiler: Compiler): Promise<CompilerData> {
+    const { context, inputFileSystem } = compiler;
     const { root, headers, ssri } = this.options;
 
-    const headersProps = await this.loadDefault(root ?? context, fs);
+    const headersProps = await this.loadDefault(compiler);
 
     if (typeof headers === 'string') {
-      Object.assign(headersProps, await readJSON<HeadersProps>(headers, fs));
+      Object.assign(
+        headersProps,
+        await readJSON<HeadersProps>(headers, inputFileSystem as FsReadFile),
+      );
     } else if (typeof headers === 'object') {
       Object.assign(headersProps, headers);
     }
 
+    let lockfile: string | undefined;
     let ssriLock: SSRILock | undefined;
     if (ssri) {
-      let lockfile: string | undefined;
       if (typeof ssri === 'object' && typeof ssri.lock === 'string') {
         lockfile = ssri.lock;
       } else if (ssri === true || ssri.lock === true) {
@@ -135,17 +136,20 @@ export class UserscriptPlugin {
 
       if (lockfile !== undefined) {
         try {
-          ssriLock = await readJSON<SSRILock>(lockfile, fs);
+          ssriLock = await readJSON<SSRILock>(
+            lockfile,
+            inputFileSystem as FsReadFile,
+          );
         } catch {}
       }
     }
 
-    return { headers: this.headersFactory(headersProps), ssriLock };
+    return { headers: this.headersFactory(headersProps), ssriLock, lockfile };
   }
 
   protected async emit(
     compilation: Compilation,
-    data: CompilationData,
+    data: CompilerData,
   ): Promise<void> {
     const fileInfoList = this.analyzeFileInfo(compilation);
 
@@ -157,6 +161,15 @@ export class UserscriptPlugin {
 
     for (const { originalFile } of fileInfoList) {
       compilation.deleteAsset(originalFile);
+    }
+  }
+
+  protected async shutdown(
+    _: Compiler,
+    { lockfile, ssriLock }: CompilerData,
+  ): Promise<void> {
+    if (lockfile !== undefined) {
+      await writeJSON(lockfile, ssriLock);
     }
   }
 
@@ -202,20 +215,26 @@ export class UserscriptPlugin {
 
   protected async emitAssets(
     compilation: Compilation,
-    data: CompilationData,
+    data: CompilerData,
     fileInfo: FileInfo,
   ): Promise<void> {
     const { headers: headersOption } = this.options;
+
+    let headers = data.headers;
     if (typeof headersOption === 'function') {
-      data.headers = data.headers.update(await headersOption(fileInfo));
+      headers = headers.update(await headersOption(fileInfo));
     }
 
-    const { headers } = await this.hooks.processHeaders.promise({
-      headers: data.headers,
-      fileInfo,
-      compilation,
-      options: this.options,
-    });
+    const { headers: processedHeaders, ssriLock } =
+      await this.hooks.processHeaders.promise({
+        headers,
+        ssriLock: data.ssriLock,
+        fileInfo,
+        compilation,
+        options: this.options,
+      });
+    headers = processedHeaders;
+    data.ssriLock = ssriLock;
 
     const { originalFile, chunk, metajsFile, userjsFile } = fileInfo;
     const headersStr = headers.render();
@@ -251,7 +270,8 @@ interface PackageJson {
   bugs?: string | { url?: string };
 }
 
-interface CompilationData {
+interface CompilerData {
   headers: Headers;
   ssriLock?: SSRILock;
+  lockfile?: string;
 }

@@ -20,6 +20,14 @@ export interface FsReadFile {
   ): void;
 }
 
+export interface FsWriteFile {
+  writeFile(
+    path: string,
+    data: string | Buffer,
+    callback: (err: Error | null) => void,
+  ): void;
+}
+
 export async function findPackage(
   cwd: string,
   fs: FsStat = _fs,
@@ -48,7 +56,16 @@ export async function readJSON<T>(
   file: string,
   fs: FsReadFile = _fs,
 ): Promise<T> {
-  const readfileAsync = promisify(fs.readFile);
-  const buf = await readfileAsync(file);
+  const readFileAsync = promisify(fs.readFile);
+  const buf = await readFileAsync(file);
   return JSON.parse(buf.toString('utf-8'));
+}
+
+export async function writeJSON(
+  file: string,
+  data: unknown,
+  fs: FsWriteFile = _fs,
+): Promise<void> {
+  const writeFileAsync = promisify(fs.writeFile);
+  await writeFileAsync(file, Buffer.from(JSON.stringify(data), 'utf-8'));
 }
