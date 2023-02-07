@@ -20,10 +20,13 @@
   "homepage": "https://github.com/momocow/webpack-userscript#readme",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "lint": "eslint lib/ --ext .js,.jsx,.ts,.tsx",
     "test": "jest",
-    "clean": "rm -rf dist build package",
+    "clean": "shx rm -rf dist build package",
     "ts-node": "ts-node",
     "docs": "typedoc --entryPoints lib/index.ts",
     "build": "tsc -p tsconfig.build.json",
@@ -50,6 +53,7 @@
     "lint-staged": "^13.1.0",
     "memfs": "^3.4.13",
     "prettier": "^2.8.3",
+    "shx": "^0.3.4",
     "ts-jest": "^29.0.5",
     "ts-node": "^10.9.1",
     "typedoc": "^0.23.24",
