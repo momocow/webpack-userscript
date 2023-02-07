@@ -3,14 +3,7 @@ import path from 'node:path';
 import { AsyncSeriesWaterfallHook } from 'tapable';
 import { Compilation, Compiler, sources } from 'webpack';
 
-import {
-  findPackage,
-  FsExists,
-  FsReadFile,
-  FsStat,
-  isFile,
-  readJSON,
-} from './fs';
+import { findPackage, FsReadFile, FsStat, readJSON } from './fs';
 import { Headers, HeadersImpl, HeadersProps } from './headers';
 import {
   resolveDownloadBaseUrl,
@@ -22,7 +15,7 @@ import { processSSRI } from './ssri';
 import {
   FileInfo,
   HeadersWaterfall,
-  SSRIMap,
+  SSRILock,
   UserscriptOptions,
 } from './types';
 
@@ -52,7 +45,7 @@ export class UserscriptPlugin {
     compiler.hooks.beforeCompile.tapPromise(PLUGIN, async (params) => {
       const data = await this.prepare(
         compiler.context,
-        compiler.inputFileSystem as FsReadFile & FsStat & FsExists,
+        compiler.inputFileSystem as FsReadFile & FsStat,
       );
       compilationData.set(params, data);
     });
@@ -90,7 +83,7 @@ export class UserscriptPlugin {
 
   protected async loadDefault(
     context: string,
-    fs: FsStat & FsReadFile & FsExists,
+    fs: FsStat & FsReadFile,
   ): Promise<HeadersProps> {
     try {
       const projectDir = await findPackage(context, fs);
@@ -119,7 +112,7 @@ export class UserscriptPlugin {
 
   protected async prepare(
     context: string,
-    fs: FsStat & FsReadFile & FsExists,
+    fs: FsStat & FsReadFile,
   ): Promise<CompilationData> {
     const { root, headers, ssri } = this.options;
 
@@ -131,36 +124,23 @@ export class UserscriptPlugin {
       Object.assign(headersProps, headers);
     }
 
-    let ssriMap: SSRIMap | undefined;
-    if ((typeof ssri === 'object' && ssri.lock) || ssri) {
-      const lockfile =
-        ssri === true ||
-        typeof ssri.lock == 'boolean' ||
-        ssri.lock === undefined
-          ? path.join(root ?? context, './ssri-lock.json')
-          : ssri.lock;
+    let ssriLock: SSRILock | undefined;
+    if (ssri) {
+      let lockfile: string | undefined;
+      if (typeof ssri === 'object' && typeof ssri.lock === 'string') {
+        lockfile = ssri.lock;
+      } else if (ssri === true || ssri.lock === true) {
+        lockfile = path.join(root ?? context, 'ssri-lock.json');
+      }
 
-      ssriMap = await this.readSSRILockFile(lockfile, fs);
+      if (lockfile !== undefined) {
+        try {
+          ssriLock = await readJSON<SSRILock>(lockfile, fs);
+        } catch {}
+      }
     }
 
-    return { headers: this.headersFactory(headersProps), ssriMap };
-  }
-
-  protected async readSSRILockFile(
-    file: string,
-    fs: FsReadFile & FsExists,
-  ): Promise<SSRIMap> {
-    await isFile(file, fs);
-    const json = await readJSON<Record<string, Record<string, string>>>(
-      file,
-      fs,
-    );
-    return new Map(
-      Object.entries(json).map(([url, ssriMap]) => [
-        url,
-        new Map(Object.entries(ssriMap)),
-      ]),
-    ) as SSRIMap;
+    return { headers: this.headersFactory(headersProps), ssriLock };
   }
 
   protected async emit(
@@ -273,5 +253,5 @@ interface PackageJson {
 
 interface CompilationData {
   headers: Headers;
-  ssriMap?: SSRIMap;
+  ssriLock?: SSRILock;
 }

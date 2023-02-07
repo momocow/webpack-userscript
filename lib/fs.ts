@@ -13,10 +13,6 @@ export interface FsStat {
   ): void;
 }
 
-export interface FsExists {
-  existsSync(file: string): boolean;
-}
-
 export interface FsReadFile {
   readFile(
     path: string,
@@ -24,38 +20,25 @@ export interface FsReadFile {
   ): void;
 }
 
-export interface FsWriteFile {
-  writeFile(
-    path: string,
-    data: string,
-    callback: (err: Error | null) => void,
-  ): void;
-}
-
-export async function isFile(
-  file: string,
-  fs: FsStat & FsExists = _fs,
-): Promise<boolean> {
-  if (!fs.existsSync(file)) {
-    return false;
-  }
-  const statAsync = promisify(fs.stat);
-  const stat = await statAsync(file);
-  return stat.isFile();
-}
-
 export async function findPackage(
   cwd: string,
-  fs: FsStat & FsExists = _fs,
+  fs: FsStat = _fs,
 ): Promise<string> {
+  const statAsync = promisify(fs.stat);
+
   let dir = cwd;
   while (true) {
     const parent = path.dirname(dir);
-    if (await isFile(path.join(dir, 'package.json'), fs)) {
-      return dir;
-    }
-    if (dir === parent) {
-      throw new Error(`package.json is not found`);
+    try {
+      const pkg = await statAsync(path.join(dir, 'package.json'));
+      if (pkg.isFile()) {
+        return dir;
+      }
+    } catch (e) {
+      // root directory
+      if (dir === parent) {
+        throw new Error(`package.json is not found`);
+      }
     }
     dir = parent;
   }
@@ -68,13 +51,4 @@ export async function readJSON<T>(
   const readfileAsync = promisify(fs.readFile);
   const buf = await readfileAsync(file);
   return JSON.parse(buf.toString('utf-8'));
-}
-
-export async function writeJSON(
-  file: string,
-  data: string,
-  fs: FsWriteFile = _fs,
-): Promise<void> {
-  const writeFileAsync = promisify(fs.writeFile);
-  await writeFileAsync(file, data);
 }

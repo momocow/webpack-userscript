@@ -1,3 +1,4 @@
+import { IntegrityMap } from 'ssri';
 import { URL } from 'url';
 import { Chunk, Compilation } from 'webpack';
 
@@ -46,14 +47,15 @@ export interface FileInfo {
   metajsFile: string;
 }
 
-export type SSRIMap = Map<string, Map<SSRIAlgorithm, string>>;
+export type SSRILock = Record<string, string>;
+export type SSRIMap = Map<string, IntegrityMap>;
 
 export interface HeadersWaterfall {
   headers: Headers;
   fileInfo: FileInfo;
   compilation: Compilation;
   options: UserscriptOptions;
-  ssriMap: SSRIMap;
+  ssriLock?: SSRILock;
 }
 
 export type ProcessHeadersHook = (data: HeadersWaterfall) => Headers;
