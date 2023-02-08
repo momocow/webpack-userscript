@@ -18,9 +18,7 @@ export interface UserscriptOptions {
   ssri?: true | SSRIOptions;
 }
 
-export type HeadersProvider = (
-  fileInfo: FileInfo,
-) => HeadersProps | Promise<HeadersProps>;
+export type HeadersProvider = ProcessHeadersHook | ProcessHeadersAsyncHook;
 export type HeadersFile = string;
 
 export type HeadersOption =

@@ -6,6 +6,7 @@ import { Compilation, Compiler, sources } from 'webpack';
 import { findPackage, FsReadFile, FsStat, readJSON, writeJSON } from './fs';
 import { Headers, HeadersImpl, HeadersProps } from './headers';
 import {
+  applyWhitelist,
   resolveDownloadBaseUrl,
   resolveUpdateBaseUrl,
   setDefaultMatch,
@@ -56,21 +57,53 @@ export class UserscriptPlugin {
       await this.shutdown(compiler, compilerData);
     });
 
-    this.hooks.processHeaders.tap(PLUGIN, wrapHook(setDefaultMatch));
-    if (this.options.downloadBaseUrl !== undefined) {
-      this.hooks.processHeaders.tap(PLUGIN, wrapHook(resolveDownloadBaseUrl));
+    this.applyHooks();
+  }
+
+  protected applyHooks(): void {
+    const { downloadBaseUrl, updateBaseUrl, ssri, headers, whitelist, strict } =
+      this.options;
+
+    if (typeof headers === 'function') {
+      this.hooks.processHeaders.tapPromise(
+        headers.name,
+        wrapHook(async (data) => headers(data)),
+      );
     }
-    if (this.options.updateBaseUrl !== undefined) {
-      this.hooks.processHeaders.tap(PLUGIN, wrapHook(resolveUpdateBaseUrl));
+
+    if (downloadBaseUrl !== undefined) {
+      this.hooks.processHeaders.tap(
+        resolveDownloadBaseUrl.name,
+        wrapHook(resolveDownloadBaseUrl),
+      );
     }
-    if (this.options.ssri) {
-      this.hooks.processHeaders.tapPromise(PLUGIN, wrapHook(processSSRI));
+    if (updateBaseUrl !== undefined) {
+      this.hooks.processHeaders.tap(
+        resolveUpdateBaseUrl.name,
+        wrapHook(resolveUpdateBaseUrl),
+      );
+    }
+    if (ssri) {
+      this.hooks.processHeaders.tapPromise(
+        processSSRI.name,
+        wrapHook(processSSRI),
+      );
+    }
+    this.hooks.processHeaders.tap(
+      setDefaultMatch.name,
+      wrapHook(setDefaultMatch),
+    );
+
+    if (whitelist ?? strict) {
+      this.hooks.processHeaders.tap(
+        applyWhitelist.name,
+        wrapHook(applyWhitelist),
+      );
     }
   }
 
   protected headersFactory(props: HeadersProps): Headers {
-    const { whitelist, strict } = this.options;
-    return HeadersImpl.fromJSON(props, { whitelist: whitelist ?? strict });
+    return HeadersImpl.fromJSON(props);
   }
 
   protected async loadDefault({
@@ -214,29 +247,15 @@ export class UserscriptPlugin {
     data: CompilerData,
     fileInfo: FileInfo,
   ): Promise<void> {
-    const {
-      headers: headersOption,
-      prefix,
-      pretty,
-      suffix,
-      whitelist,
-      strict,
-    } = this.options;
+    const { prefix, pretty, suffix, whitelist, strict } = this.options;
 
-    let headers = data.headers;
-    if (typeof headersOption === 'function') {
-      headers = headers.update(await headersOption(fileInfo));
-    }
-
-    const { headers: processedHeaders, ssriLock } =
-      await this.hooks.processHeaders.promise({
-        headers,
-        ssriLock: data.ssriLock,
-        fileInfo,
-        compilation,
-        options: this.options,
-      });
-    headers = processedHeaders;
+    const { headers, ssriLock } = await this.hooks.processHeaders.promise({
+      headers: data.headers,
+      ssriLock: data.ssriLock,
+      fileInfo,
+      compilation,
+      options: this.options,
+    });
     data.ssriLock = ssriLock;
 
     if (strict) {

@@ -70,3 +70,6 @@ export const resolveUpdateBaseUrl: ProcessHeadersHook = ({
   }
   return headers;
 };
+
+export const applyWhitelist: ProcessHeadersHook = ({ headers }) =>
+  headers.update({}, { whitelist: true });

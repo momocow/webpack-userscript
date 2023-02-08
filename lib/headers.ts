@@ -247,11 +247,17 @@ export class HeadersImpl implements StrictHeadersProps {
     return instanceToPlain(this, { exposeUnsetFields: false });
   }
 
-  public update(props: HeadersProps): Headers {
-    return (this.constructor as typeof HeadersImpl).fromJSON({
-      ...this.toJSON(),
-      ...props,
-    });
+  public update(
+    props: HeadersProps,
+    options: HeadersFactoryOptions = {},
+  ): Headers {
+    return (this.constructor as typeof HeadersImpl).fromJSON(
+      {
+        ...this.toJSON(),
+        ...props,
+      },
+      options,
+    );
   }
 
   public render({
@@ -310,7 +316,7 @@ export class HeadersImpl implements StrictHeadersProps {
 
   public static fromJSON<T extends HeadersImpl>(
     props: HeadersProps,
-    { whitelist = false }: Partial<HeadersFactoryOptions> = {},
+    { whitelist = false }: HeadersFactoryOptions = {},
   ): Readonly<T> {
     const headers = plainToInstance(
       this as unknown as ClassConstructor<T>,
