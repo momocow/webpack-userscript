@@ -34,13 +34,13 @@ export class UserscriptPlugin {
 
   public apply(compiler: Compiler): void {
     const PLUGIN = this.constructor.name;
-    let compilerData: CompilerData | undefined;
+    let data: CompilerData | undefined;
 
     compiler.hooks.beforeCompile.tapPromise(PLUGIN, async () => {
-      if (!compilerData) {
-        compilerData = await this.prepare(compiler);
+      if (!data) {
+        data = await this.init(compiler);
       }
-      compilerData.buildNo++;
+      await this.prepare(compiler, data);
     });
 
     compiler.hooks.compilation.tap(PLUGIN, (compilation) => {
@@ -50,15 +50,15 @@ export class UserscriptPlugin {
           stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
         },
         async () => {
-          if (!compilerData) return;
-          await this.emit(compilation, compilerData);
+          if (!data) return;
+          await this.emit(compilation, data);
         },
       );
     });
 
     compiler.hooks.shutdown.tapPromise(PLUGIN, async () => {
-      if (!compilerData) return;
-      await this.shutdown(compiler, compilerData);
+      if (!data) return;
+      await this.shutdown(compiler, data);
     });
 
     this.applyHooks();
@@ -145,18 +145,13 @@ export class UserscriptPlugin {
     }
   }
 
-  protected async prepare(compiler: Compiler): Promise<CompilerData> {
+  protected async init(compiler: Compiler): Promise<CompilerData> {
     const { context, inputFileSystem } = compiler;
     const { root, headers, ssri } = this.options;
 
     const headersProps = await this.loadDefault(compiler);
 
-    if (typeof headers === 'string') {
-      Object.assign(
-        headersProps,
-        await readJSON<HeadersProps>(headers, inputFileSystem as FsReadFile),
-      );
-    } else if (typeof headers === 'object') {
+    if (typeof headers === 'object') {
       Object.assign(headersProps, headers);
     }
 
@@ -180,6 +175,23 @@ export class UserscriptPlugin {
     }
 
     return { headers: headersProps, ssriLock, lockfile, buildNo: 0 };
+  }
+
+  protected async prepare(
+    compiler: Compiler,
+    data: CompilerData,
+  ): Promise<void> {
+    const { inputFileSystem } = compiler;
+    const { headers } = this.options;
+
+    if (typeof headers === 'string') {
+      Object.assign(
+        data.headers,
+        await readJSON<HeadersProps>(headers, inputFileSystem as FsReadFile),
+      );
+    }
+
+    data.buildNo++;
   }
 
   protected async emit(
