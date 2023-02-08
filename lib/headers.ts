@@ -17,22 +17,17 @@ import {
 import { getBorderCharacters, table } from 'table';
 
 export interface HeadersFactoryOptions {
-  strict: boolean;
-  whitelist: boolean;
-}
-
-export enum RunAtValue {
-  DocumentStart = 'document-start',
-  DocumentBody = 'document-body',
-  DocumentEnd = 'document-end',
-  DocumentIdle = 'document-idle',
-  ContextMenu = 'context-menu',
+  whitelist?: boolean;
 }
 
 export interface HeadersRenderOptions {
   prefix?: string;
   suffix?: string;
   pretty?: boolean;
+}
+
+export interface HeadersValidateOptions {
+  whitelist?: boolean;
 }
 
 export type TagType = string;
@@ -47,6 +42,14 @@ export type SingleValue = string;
 export type MultiValue = string | string[];
 export type NamedValue = Record<string, string>;
 export type SwitchValue = boolean;
+
+export enum RunAtValue {
+  DocumentStart = 'document-start',
+  DocumentBody = 'document-body',
+  DocumentEnd = 'document-end',
+  DocumentIdle = 'document-idle',
+  ContextMenu = 'context-menu',
+}
 
 export interface StrictHeadersProps {
   name?: SingleValue;
@@ -293,9 +296,21 @@ export class HeadersImpl implements StrictHeadersProps {
     return [['//', `@${tag}`, String(value)]];
   }
 
+  public validate({ whitelist }: HeadersValidateOptions = {}): void {
+    const errors = validateSync(this, {
+      forbidNonWhitelisted: whitelist,
+      whitelist,
+      stopAtFirstError: false,
+    });
+
+    if (errors.length > 0) {
+      throw new Error(errors.map((err) => err.toString()).join('\n'));
+    }
+  }
+
   public static fromJSON<T extends HeadersImpl>(
     props: HeadersProps,
-    { strict = false, whitelist = false }: Partial<HeadersFactoryOptions> = {},
+    { whitelist = false }: Partial<HeadersFactoryOptions> = {},
   ): Readonly<T> {
     const headers = plainToInstance(
       this as unknown as ClassConstructor<T>,
@@ -305,18 +320,6 @@ export class HeadersImpl implements StrictHeadersProps {
         excludeExtraneousValues: whitelist,
       },
     );
-
-    if (strict) {
-      const errors = validateSync(headers, {
-        forbidNonWhitelisted: whitelist,
-        whitelist,
-        stopAtFirstError: false,
-      });
-
-      if (errors.length > 0) {
-        throw new Error(errors.map((err) => err.toString()).join('\n'));
-      }
-    }
 
     return headers;
   }

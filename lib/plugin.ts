@@ -69,7 +69,8 @@ export class UserscriptPlugin {
   }
 
   protected headersFactory(props: HeadersProps): Headers {
-    return HeadersImpl.fromJSON(props);
+    const { whitelist, strict } = this.options;
+    return HeadersImpl.fromJSON(props, { whitelist: whitelist ?? strict });
   }
 
   protected async loadDefault({
@@ -213,7 +214,14 @@ export class UserscriptPlugin {
     data: CompilerData,
     fileInfo: FileInfo,
   ): Promise<void> {
-    const { headers: headersOption, prefix, pretty, suffix } = this.options;
+    const {
+      headers: headersOption,
+      prefix,
+      pretty,
+      suffix,
+      whitelist,
+      strict,
+    } = this.options;
 
     let headers = data.headers;
     if (typeof headersOption === 'function') {
@@ -230,6 +238,10 @@ export class UserscriptPlugin {
       });
     headers = processedHeaders;
     data.ssriLock = ssriLock;
+
+    if (strict) {
+      headers.validate({ whitelist: whitelist ?? true });
+    }
 
     const { originalFile, chunk, metajsFile, userjsFile } = fileInfo;
     const headersStr = headers.render({
