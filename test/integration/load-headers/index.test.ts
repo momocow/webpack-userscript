@@ -1,4 +1,4 @@
-import { UserscriptPlugin } from 'webpack-userscript';
+import { HeadersProps, UserscriptPlugin } from 'webpack-userscript';
 
 import { compile } from '../util';
 import { Volume } from '../volume';
@@ -95,7 +95,8 @@ describe('load-headers', () => {
         },
         plugins: [
           new UserscriptPlugin({
-            headers: (): Record<string, string> => ({
+            headers: ({ headers }): HeadersProps => ({
+              ...headers,
               name: 'load-headers',
             }),
           }),
@@ -121,7 +122,8 @@ describe('load-headers', () => {
         },
         plugins: [
           new UserscriptPlugin({
-            headers: async (): Promise<Record<string, string>> => ({
+            headers: async ({ headers }): Promise<HeadersProps> => ({
+              ...headers,
               name: 'load-headers',
             }),
           }),

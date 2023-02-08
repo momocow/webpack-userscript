@@ -4,77 +4,133 @@ import { AsyncSeriesWaterfallHook } from 'tapable';
 import { Compilation, Compiler, sources } from 'webpack';
 
 import { findPackage, FsReadFile, FsStat, readJSON, writeJSON } from './fs';
-import { Headers, HeadersImpl, HeadersProps } from './headers';
+import { Headers, HeadersProps } from './headers';
+import { wrapHook } from './hook';
 import {
+  fixTagNames,
+  interpolateValues,
+  processSSRI,
   resolveDownloadBaseUrl,
   resolveUpdateBaseUrl,
   setDefaultMatch,
-  wrapHook,
-} from './hooks';
-import { processSSRI } from './ssri';
+} from './reducers';
+import { processProxyScript } from './reducers/proxy-script';
 import {
   FileInfo,
   HeadersWaterfall,
   SSRILock,
   UserscriptOptions,
 } from './types';
+import { interpolate } from './util';
 
 const { ConcatSource, RawSource } = sources;
 
 export class UserscriptPlugin {
-  public static readonly DEFAULT_OPTIONS: Readonly<UserscriptOptions> = {};
   public readonly hooks = {
     processHeaders: new AsyncSeriesWaterfallHook<HeadersWaterfall>(['headers']),
+    processProxyHeaders: new AsyncSeriesWaterfallHook<HeadersWaterfall>([
+      'headers',
+    ]),
   };
 
-  // protected readonly headersCache = new WeakMap<Source, CacheEntry>();
-
   public constructor(
-    public options: UserscriptOptions = {
-      ...UserscriptPlugin.DEFAULT_OPTIONS,
-    },
+    public readonly options: Readonly<UserscriptOptions> = {},
   ) {}
 
   public apply(compiler: Compiler): void {
     const PLUGIN = this.constructor.name;
-    let compilerData: CompilerData | undefined;
+    let data: CompilerData | undefined;
 
     compiler.hooks.beforeCompile.tapPromise(PLUGIN, async () => {
-      compilerData = await this.prepare(compiler);
+      if (!data) {
+        data = await this.init(compiler);
+      }
     });
 
     compiler.hooks.compilation.tap(PLUGIN, (compilation) => {
       compilation.hooks.processAssets.tapPromise(
+        { name: PLUGIN, stage: Compilation.PROCESS_ASSETS_STAGE_PRE_PROCESS },
+        async () => {
+          if (!data) return;
+          await this.prepare(compilation, data);
+        },
+      );
+      compilation.hooks.processAssets.tapPromise(
         {
           name: PLUGIN,
+          // we should generate userscript files
+          // only if optimization of source files are complete
           stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
         },
         async () => {
-          if (!compilerData) return;
-          await this.emit(compilation, compilerData);
+          if (!data) return;
+          await this.emit(compilation, data);
         },
       );
     });
 
     compiler.hooks.shutdown.tapPromise(PLUGIN, async () => {
-      if (!compilerData) return;
-      await this.shutdown(compiler, compilerData);
+      if (!data) return;
+      await this.shutdown(compiler, data);
     });
 
-    this.hooks.processHeaders.tap(PLUGIN, wrapHook(setDefaultMatch));
-    if (this.options.downloadBaseUrl !== undefined) {
-      this.hooks.processHeaders.tap(PLUGIN, wrapHook(resolveDownloadBaseUrl));
+    this.applyHooks();
+  }
+
+  protected applyHooks(): void {
+    const { downloadBaseUrl, updateBaseUrl, ssri, headers, proxyScript } =
+      this.options;
+
+    if (typeof headers === 'function') {
+      this.hooks.processHeaders.tapPromise(
+        headers.name,
+        wrapHook(async (data) => headers(data)),
+      );
     }
-    if (this.options.updateBaseUrl !== undefined) {
-      this.hooks.processHeaders.tap(PLUGIN, wrapHook(resolveUpdateBaseUrl));
+
+    this.hooks.processHeaders.tap(fixTagNames.name, wrapHook(fixTagNames));
+
+    if (downloadBaseUrl !== undefined) {
+      this.hooks.processHeaders.tap(
+        resolveDownloadBaseUrl.name,
+        wrapHook(resolveDownloadBaseUrl),
+      );
     }
-    if (this.options.ssri) {
-      this.hooks.processHeaders.tapPromise(PLUGIN, wrapHook(processSSRI));
+
+    if (updateBaseUrl !== undefined) {
+      this.hooks.processHeaders.tap(
+        resolveUpdateBaseUrl.name,
+        wrapHook(resolveUpdateBaseUrl),
+      );
+    }
+
+    if (ssri) {
+      this.hooks.processHeaders.tapPromise(
+        processSSRI.name,
+        wrapHook(processSSRI),
+      );
+    }
+
+    this.hooks.processHeaders.tap(
+      setDefaultMatch.name,
+      wrapHook(setDefaultMatch),
+    );
+
+    this.hooks.processHeaders.tap(
+      interpolateValues.name,
+      wrapHook(interpolateValues),
+    );
+
+    if (proxyScript) {
+      this.hooks.processProxyHeaders.tap(
+        processProxyScript.name,
+        wrapHook(processProxyScript),
+      );
     }
   }
 
-  protected headersFactory(props: HeadersProps): Headers {
-    return HeadersImpl.fromJSON(props);
+  protected headersFactory(props: HeadersProps): Readonly<Headers> {
+    return Headers.fromJSON(props);
   }
 
   protected async loadDefault({
@@ -110,18 +166,13 @@ export class UserscriptPlugin {
     }
   }
 
-  protected async prepare(compiler: Compiler): Promise<CompilerData> {
+  protected async init(compiler: Compiler): Promise<CompilerData> {
     const { context, inputFileSystem } = compiler;
     const { root, headers, ssri } = this.options;
 
     const headersProps = await this.loadDefault(compiler);
 
-    if (typeof headers === 'string') {
-      Object.assign(
-        headersProps,
-        await readJSON<HeadersProps>(headers, inputFileSystem as FsReadFile),
-      );
-    } else if (typeof headers === 'object') {
+    if (typeof headers === 'object') {
       Object.assign(headersProps, headers);
     }
 
@@ -129,7 +180,7 @@ export class UserscriptPlugin {
     let ssriLock: SSRILock | undefined;
     if (ssri) {
       if (typeof ssri === 'object' && typeof ssri.lock === 'string') {
-        lockfile = ssri.lock;
+        lockfile = path.join(root ?? context, ssri.lock);
       } else if (ssri === true || ssri.lock === true) {
         lockfile = path.join(root ?? context, 'ssri-lock.json');
       }
@@ -144,7 +195,36 @@ export class UserscriptPlugin {
       }
     }
 
-    return { headers: this.headersFactory(headersProps), ssriLock, lockfile };
+    return { headers: headersProps, ssriLock, lockfile, buildNo: 0 };
+  }
+
+  protected async prepare(
+    compilation: Compilation,
+    data: CompilerData,
+  ): Promise<void> {
+    const {
+      inputFileSystem,
+      compiler: { context },
+    } = compilation;
+    const { headers, root } = this.options;
+
+    if (typeof headers === 'string') {
+      const headersFile =
+        data.headersFile ?? path.join(root ?? context, headers);
+
+      Object.assign(
+        data.headers,
+        await readJSON<HeadersProps>(
+          headersFile,
+          inputFileSystem as FsReadFile,
+        ),
+      );
+
+      compilation.fileDependencies.add(headersFile);
+      data.headersFile = headersFile;
+    }
+
+    data.buildNo++;
   }
 
   protected async emit(
@@ -206,6 +286,9 @@ export class UserscriptPlugin {
           originalFile,
           userjsFile,
           metajsFile,
+          filename,
+          basename,
+          query,
         });
       }
     }
@@ -218,26 +301,71 @@ export class UserscriptPlugin {
     data: CompilerData,
     fileInfo: FileInfo,
   ): Promise<void> {
-    const { headers: headersOption } = this.options;
+    const { prefix, pretty, suffix, whitelist, strict, proxyScript, metajs } =
+      this.options;
 
-    let headers = data.headers;
-    if (typeof headersOption === 'function') {
-      headers = headers.update(await headersOption(fileInfo));
-    }
-
-    const { headers: processedHeaders, ssriLock } =
+    const { headers: headersProps, ssriLock } =
       await this.hooks.processHeaders.promise({
-        headers,
+        headers: data.headers,
         ssriLock: data.ssriLock,
         fileInfo,
         compilation,
+        buildNo: data.buildNo,
         options: this.options,
       });
-    headers = processedHeaders;
     data.ssriLock = ssriLock;
 
+    const headers = this.headersFactory(headersProps);
+    if (strict) {
+      headers.validate({ whitelist: whitelist ?? true });
+    }
+
+    let proxyScriptFile: string | undefined;
+    let proxyHeaders: Readonly<Headers> | undefined;
+
+    if (proxyScript) {
+      const { headers: proxyHeadersProps } =
+        await this.hooks.processProxyHeaders.promise({
+          headers: headersProps,
+          ssriLock,
+          fileInfo,
+          compilation,
+          buildNo: data.buildNo,
+          options: this.options,
+        });
+
+      proxyHeaders = this.headersFactory(proxyHeadersProps);
+
+      if (strict) {
+        proxyHeaders.validate({ whitelist: whitelist ?? true });
+      }
+
+      if (proxyScript === true || proxyScript.filename === undefined) {
+        proxyScriptFile = '[basename].proxy.user.js';
+      } else {
+        proxyScriptFile = interpolate(proxyScript.filename, {
+          chunkName: fileInfo.chunk.name,
+          file: fileInfo.originalFile,
+          filename: fileInfo.filename,
+          basename: fileInfo.basename,
+          query: fileInfo.query,
+          buildNo: data.buildNo.toString(),
+          buildTime: Date.now().toString(),
+        });
+      }
+    }
+
     const { originalFile, chunk, metajsFile, userjsFile } = fileInfo;
-    const headersStr = headers.render();
+    const headersStr = headers.render({
+      prefix,
+      pretty,
+      suffix,
+    });
+    const proxyHeadersStr = proxyHeaders?.render({
+      prefix,
+      pretty,
+      suffix,
+    });
     const sourceAsset = compilation.getAsset(originalFile);
     if (!sourceAsset) {
       return;
@@ -247,14 +375,25 @@ export class UserscriptPlugin {
       userjsFile,
       new ConcatSource(headersStr, '\n', sourceAsset.source),
       {
-        related: { metajs: metajsFile },
         minimized: true,
       },
     );
-    compilation.emitAsset(metajsFile, new RawSource(headersStr), {
-      related: { userjs: userjsFile },
-      minimized: true,
-    });
+
+    if (metajs !== false) {
+      compilation.emitAsset(
+        metajsFile,
+        new RawSource(proxyHeadersStr ?? headersStr),
+        {
+          minimized: true,
+        },
+      );
+    }
+
+    if (proxyHeadersStr !== undefined && proxyScriptFile !== undefined) {
+      compilation.emitAsset(proxyScriptFile, new RawSource(proxyHeadersStr), {
+        minimized: true,
+      });
+    }
 
     chunk.files.add(userjsFile);
     chunk.auxiliaryFiles.add(metajsFile);
@@ -271,7 +410,9 @@ interface PackageJson {
 }
 
 interface CompilerData {
-  headers: Headers;
+  buildNo: number;
+  headers: HeadersProps;
+  headersFile?: string;
   ssriLock?: SSRILock;
   lockfile?: string;
 }

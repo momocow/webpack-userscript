@@ -14,24 +14,20 @@ import {
   IsUrl,
   validateSync,
 } from 'class-validator';
+import { getBorderCharacters, table } from 'table';
 
 export interface HeadersFactoryOptions {
-  strict: boolean;
-  whitelist: boolean;
-}
-
-export enum RunAtValue {
-  DocumentStart = 'document-start',
-  DocumentBody = 'document-body',
-  DocumentEnd = 'document-end',
-  DocumentIdle = 'document-idle',
-  ContextMenu = 'context-menu',
+  whitelist?: boolean;
 }
 
 export interface HeadersRenderOptions {
   prefix?: string;
   suffix?: string;
   pretty?: boolean;
+}
+
+export interface HeadersValidateOptions {
+  whitelist?: boolean;
 }
 
 export type TagType = string;
@@ -46,6 +42,14 @@ export type SingleValue = string;
 export type MultiValue = string | string[];
 export type NamedValue = Record<string, string>;
 export type SwitchValue = boolean;
+
+export enum RunAtValue {
+  DocumentStart = 'document-start',
+  DocumentBody = 'document-body',
+  DocumentEnd = 'document-end',
+  DocumentIdle = 'document-idle',
+  ContextMenu = 'context-menu',
+}
 
 export interface StrictHeadersProps {
   name?: SingleValue;
@@ -84,9 +88,7 @@ export interface HeadersProps extends StrictHeadersProps {
   [tag: TagType]: ValueType;
 }
 
-export type Headers = Readonly<HeadersImpl>;
-
-export class HeadersImpl implements StrictHeadersProps {
+export class Headers implements StrictHeadersProps {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   protected constructor() {}
 
@@ -243,47 +245,65 @@ export class HeadersImpl implements StrictHeadersProps {
     return instanceToPlain(this, { exposeUnsetFields: false });
   }
 
-  public update(props: HeadersProps): Headers {
-    return (this.constructor as typeof HeadersImpl).fromJSON({
-      ...this.toJSON(),
-      ...props,
-    });
-  }
-
   public render({
-    prefix = '// ==UserScript==',
-    suffix = '// ==/UserScript==',
+    prefix = '// ==UserScript==\n',
+    suffix = '// ==/UserScript==\n',
+    pretty = false,
   }: HeadersRenderOptions = {}): string {
-    const obj = instanceToPlain(this, { exposeUnsetFields: false }) as Record<
-      TagType,
-      Exclude<ValueType, undefined>
-    >;
-    const body = Object.entries(obj)
-      .map(([tag, value]) => this.renderTag(tag, value))
-      .join('\n');
-    return [prefix, body, suffix].join('\n');
+    const obj = this.toJSON();
+    const rows = Object.entries(obj).flatMap(([tag, value]) =>
+      this.renderTag(tag, value),
+    );
+
+    const body = pretty
+      ? table(rows, {
+          border: getBorderCharacters('void'),
+          columnDefault: {
+            paddingLeft: 0,
+            paddingRight: 1,
+          },
+          drawHorizontalLine: () => false,
+        })
+      : rows.map((cols) => cols.join(' ')).join('\n') + '\n';
+
+    return prefix + body + suffix;
   }
 
-  protected renderTag(
-    tag: TagType,
-    value: Exclude<ValueType, undefined>,
-  ): string {
+  protected renderTag(tag: TagType, value: ValueType): string[][] {
     if (Array.isArray(value)) {
-      return value.map((v) => `// @${tag} ${v}`).join('\n');
+      return value.map((v) => ['//', `@${tag}`, v]);
     }
 
     if (typeof value === 'object') {
-      return Object.entries(value)
-        .map(([k, v]) => `// @${tag} ${k} ${v}`)
-        .join('\n');
+      return Object.entries(value).map(([k, v]) => ['//', `@${tag}`, k, v]);
     }
 
-    return `// @${tag} ${String(value)}`;
+    if (typeof value === 'string') {
+      return [['//', `@${tag}`, value]];
+    }
+
+    if (value === true) {
+      return [['//', `@${tag}`]];
+    }
+
+    return [];
   }
 
-  public static fromJSON<T extends HeadersImpl>(
+  public validate({ whitelist }: HeadersValidateOptions = {}): void {
+    const errors = validateSync(this, {
+      forbidNonWhitelisted: whitelist,
+      whitelist,
+      stopAtFirstError: false,
+    });
+
+    if (errors.length > 0) {
+      throw new Error(errors.map((err) => err.toString()).join('\n'));
+    }
+  }
+
+  public static fromJSON<T extends Headers>(
     props: HeadersProps,
-    { strict = false, whitelist = false }: Partial<HeadersFactoryOptions> = {},
+    { whitelist = false }: HeadersFactoryOptions = {},
   ): Readonly<T> {
     const headers = plainToInstance(
       this as unknown as ClassConstructor<T>,
@@ -293,18 +313,6 @@ export class HeadersImpl implements StrictHeadersProps {
         excludeExtraneousValues: whitelist,
       },
     );
-
-    if (strict) {
-      const errors = validateSync(headers, {
-        forbidNonWhitelisted: whitelist,
-        whitelist,
-        stopAtFirstError: false,
-      });
-
-      if (errors.length > 0) {
-        throw new Error(errors.map((err) => err.toString()).join('\n'));
-      }
-    }
 
     return headers;
   }
