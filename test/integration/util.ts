@@ -37,3 +37,15 @@ export async function compile(
 export function escapeRegex(str: string): string {
   return str.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
 }
+
+export function findTags(
+  tag: string,
+  value: string,
+  content: string,
+): string[] {
+  return (
+    content.match(
+      new RegExp(`// @${escapeRegex(tag)} ${escapeRegex(value)}\n`, 'g'),
+    ) ?? []
+  );
+}

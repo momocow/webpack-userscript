@@ -23,7 +23,7 @@ describe('multi-entry', () => {
         fileInfo: {
           chunk: { name },
         },
-      }) => headers.update({ name }),
+      }) => ({ ...headers, name }),
     );
 
     const output = await compile(input, {
