@@ -2,7 +2,7 @@ import { IntegrityMap } from 'ssri';
 import { URL } from 'url';
 import { Chunk, Compilation } from 'webpack';
 
-import { Headers, HeadersProps } from './headers';
+import { HeadersProps } from './headers';
 
 export interface UserscriptOptions {
   root?: string;
@@ -18,7 +18,7 @@ export interface UserscriptOptions {
   ssri?: true | SSRIOptions;
 }
 
-export type HeadersProvider = ProcessHeadersHook | ProcessHeadersAsyncHook;
+export type HeadersProvider = HeadersReducer | AsyncHeadersReducer;
 export type HeadersFile = string;
 
 export type HeadersOption =
@@ -59,8 +59,8 @@ export interface HeadersWaterfall {
   ssriLock?: SSRILock;
 }
 
-export type ProcessHeadersHook = (data: HeadersWaterfall) => Headers;
+export type HeadersReducer = (data: HeadersWaterfall) => HeadersProps;
 
-export type ProcessHeadersAsyncHook = (
+export type AsyncHeadersReducer = (
   data: HeadersWaterfall,
-) => Promise<Headers>;
+) => Promise<HeadersProps>;

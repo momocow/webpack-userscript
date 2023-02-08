@@ -247,19 +247,6 @@ export class HeadersImpl implements StrictHeadersProps {
     return instanceToPlain(this, { exposeUnsetFields: false });
   }
 
-  public update(
-    props: HeadersProps,
-    options: HeadersFactoryOptions = {},
-  ): Headers {
-    return (this.constructor as typeof HeadersImpl).fromJSON(
-      {
-        ...this.toJSON(),
-        ...props,
-      },
-      options,
-    );
-  }
-
   public render({
     prefix = '// ==UserScript==\n',
     suffix = '// ==/UserScript==\n',

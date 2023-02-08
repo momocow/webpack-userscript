@@ -5,13 +5,13 @@ import { Compilation, Compiler, sources } from 'webpack';
 
 import { findPackage, FsReadFile, FsStat, readJSON, writeJSON } from './fs';
 import { Headers, HeadersImpl, HeadersProps } from './headers';
+import { wrapHook } from './hook';
 import {
-  applyWhitelist,
+  fixTagNames,
   resolveDownloadBaseUrl,
   resolveUpdateBaseUrl,
   setDefaultMatch,
-  wrapHook,
-} from './hooks';
+} from './reducers';
 import { processSSRI } from './ssri';
 import {
   FileInfo,
@@ -61,8 +61,7 @@ export class UserscriptPlugin {
   }
 
   protected applyHooks(): void {
-    const { downloadBaseUrl, updateBaseUrl, ssri, headers, whitelist, strict } =
-      this.options;
+    const { downloadBaseUrl, updateBaseUrl, ssri, headers } = this.options;
 
     if (typeof headers === 'function') {
       this.hooks.processHeaders.tapPromise(
@@ -94,12 +93,7 @@ export class UserscriptPlugin {
       wrapHook(setDefaultMatch),
     );
 
-    if (whitelist ?? strict) {
-      this.hooks.processHeaders.tap(
-        applyWhitelist.name,
-        wrapHook(applyWhitelist),
-      );
-    }
+    this.hooks.processHeaders.tap(fixTagNames.name, wrapHook(fixTagNames));
   }
 
   protected headersFactory(props: HeadersProps): Headers {

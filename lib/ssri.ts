@@ -9,9 +9,9 @@ import {
 import { Readable } from 'stream';
 import { URL } from 'url';
 
-import { Headers, HeadersProps } from './headers';
+import { HeadersProps } from './headers';
 import {
-  ProcessHeadersAsyncHook,
+  AsyncHeadersReducer,
   SSRIAlgorithm,
   SSRILock,
   SSRIMap,
@@ -24,12 +24,16 @@ export const SSRI_MAP: Map<string, Map<SSRIAlgorithm, string>> = new Map();
 const concurrency = parseInt(process.env.WPUS_SSRI_CONCURRENCY ?? '');
 const limit = pLimit(Number.isNaN(concurrency) ? 6 : concurrency);
 
-export const processSSRI: ProcessHeadersAsyncHook = async (data) => {
+export const processSSRI: AsyncHeadersReducer = async (data) => {
   const {
     headers,
     ssriLock,
     options: { ssri },
   } = data;
+
+  if (headers.resource == undefined && headers.require === undefined) {
+    return headers;
+  }
 
   const ssriOptions: SSRIOptions =
     ssri === true || ssri === undefined ? {} : ssri;
@@ -78,7 +82,10 @@ export const processSSRI: ProcessHeadersAsyncHook = async (data) => {
     data.ssriLock = toSSRILock(ssriMap);
   }
 
-  return updateHeaders(headers, ssriMap);
+  return {
+    ...headers,
+    ...patchHeaders(headers, ssriMap),
+  };
 };
 
 export function normalizeURL(url: string): string {
@@ -88,7 +95,7 @@ export function normalizeURL(url: string): string {
 }
 
 export function getTargetURLs(
-  headers: Headers,
+  headers: HeadersProps,
   options: Pick<SSRIOptions, 'include' | 'exclude'>,
 ): string[] {
   const urls: string[] = [];
@@ -202,12 +209,11 @@ export function updateURL(url: string, ssriMap: SSRIMap): string {
   return urlObj.toString();
 }
 
-export function updateHeaders(headers: Headers, ssriMap: SSRIMap): Headers {
+export function patchHeaders(
+  headers: HeadersProps,
+  ssriMap: SSRIMap,
+): HeadersProps {
   const headersProps: HeadersProps = {};
-
-  if (headers.resource == undefined && headers.require === undefined) {
-    return headers;
-  }
 
   if (headers.require !== undefined) {
     if (Array.isArray(headers.require)) {
@@ -228,5 +234,5 @@ export function updateHeaders(headers: Headers, ssriMap: SSRIMap): Headers {
     );
   }
 
-  return headers.update(headersProps);
+  return headersProps;
 }
