@@ -88,9 +88,7 @@ export interface HeadersProps extends StrictHeadersProps {
   [tag: TagType]: ValueType;
 }
 
-export type Headers = Readonly<HeadersImpl>;
-
-export class HeadersImpl implements StrictHeadersProps {
+export class Headers implements StrictHeadersProps {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   protected constructor() {}
 
@@ -303,7 +301,7 @@ export class HeadersImpl implements StrictHeadersProps {
     }
   }
 
-  public static fromJSON<T extends HeadersImpl>(
+  public static fromJSON<T extends Headers>(
     props: HeadersProps,
     { whitelist = false }: HeadersFactoryOptions = {},
   ): Readonly<T> {

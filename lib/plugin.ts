@@ -4,7 +4,7 @@ import { AsyncSeriesWaterfallHook } from 'tapable';
 import { Compilation, Compiler, sources } from 'webpack';
 
 import { findPackage, FsReadFile, FsStat, readJSON, writeJSON } from './fs';
-import { Headers, HeadersImpl, HeadersProps } from './headers';
+import { Headers, HeadersProps } from './headers';
 import { wrapHook } from './hook';
 import {
   fixTagNames,
@@ -96,8 +96,8 @@ export class UserscriptPlugin {
     this.hooks.processHeaders.tap(fixTagNames.name, wrapHook(fixTagNames));
   }
 
-  protected headersFactory(props: HeadersProps): Headers {
-    return HeadersImpl.fromJSON(props);
+  protected headersFactory(props: HeadersProps): Readonly<Headers> {
+    return Headers.fromJSON(props);
   }
 
   protected async loadDefault({
