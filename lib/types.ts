@@ -16,6 +16,7 @@ export interface UserscriptOptions {
   downloadBaseUrl?: string;
   updateBaseUrl?: string;
   ssri?: true | SSRIOptions;
+  proxyScript?: true | ProxyScriptOptions;
 }
 
 export type HeadersProvider = HeadersReducer | AsyncHeadersReducer;
@@ -39,6 +40,11 @@ export interface SSRIOptions {
   integrity?: string;
   strict?: boolean;
   lock?: boolean | string;
+}
+
+export interface ProxyScriptOptions {
+  filename?: string;
+  baseUrl?: string;
 }
 
 export interface FileInfo {

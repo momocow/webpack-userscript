@@ -14,18 +14,23 @@ import {
   resolveUpdateBaseUrl,
   setDefaultMatch,
 } from './reducers';
+import { processProxyScript } from './reducers/proxy-script';
 import {
   FileInfo,
   HeadersWaterfall,
   SSRILock,
   UserscriptOptions,
 } from './types';
+import { interpolate } from './util';
 
 const { ConcatSource, RawSource } = sources;
 
 export class UserscriptPlugin {
   public readonly hooks = {
     processHeaders: new AsyncSeriesWaterfallHook<HeadersWaterfall>(['headers']),
+    processProxyHeaders: new AsyncSeriesWaterfallHook<HeadersWaterfall>([
+      'headers',
+    ]),
   };
 
   public constructor(
@@ -73,7 +78,8 @@ export class UserscriptPlugin {
   }
 
   protected applyHooks(): void {
-    const { downloadBaseUrl, updateBaseUrl, ssri, headers } = this.options;
+    const { downloadBaseUrl, updateBaseUrl, ssri, headers, proxyScript } =
+      this.options;
 
     if (typeof headers === 'function') {
       this.hooks.processHeaders.tapPromise(
@@ -114,6 +120,13 @@ export class UserscriptPlugin {
       interpolateValues.name,
       wrapHook(interpolateValues),
     );
+
+    if (proxyScript) {
+      this.hooks.processProxyHeaders.tap(
+        processProxyScript.name,
+        wrapHook(processProxyScript),
+      );
+    }
   }
 
   protected headersFactory(props: HeadersProps): Readonly<Headers> {
@@ -288,7 +301,8 @@ export class UserscriptPlugin {
     data: CompilerData,
     fileInfo: FileInfo,
   ): Promise<void> {
-    const { prefix, pretty, suffix, whitelist, strict } = this.options;
+    const { prefix, pretty, suffix, whitelist, strict, proxyScript, metajs } =
+      this.options;
 
     const { headers: headersProps, ssriLock } =
       await this.hooks.processHeaders.promise({
@@ -306,8 +320,48 @@ export class UserscriptPlugin {
       headers.validate({ whitelist: whitelist ?? true });
     }
 
+    let proxyScriptFile: string | undefined;
+    let proxyHeaders: Readonly<Headers> | undefined;
+
+    if (proxyScript) {
+      const { headers: proxyHeadersProps } =
+        await this.hooks.processProxyHeaders.promise({
+          headers: headersProps,
+          ssriLock,
+          fileInfo,
+          compilation,
+          buildNo: data.buildNo,
+          options: this.options,
+        });
+
+      proxyHeaders = this.headersFactory(proxyHeadersProps);
+
+      if (strict) {
+        proxyHeaders.validate({ whitelist: whitelist ?? true });
+      }
+
+      if (proxyScript === true || proxyScript.filename === undefined) {
+        proxyScriptFile = '[basename].proxy.user.js';
+      } else {
+        proxyScriptFile = interpolate(proxyScript.filename, {
+          chunkName: fileInfo.chunk.name,
+          file: fileInfo.originalFile,
+          filename: fileInfo.filename,
+          basename: fileInfo.basename,
+          query: fileInfo.query,
+          buildNo: data.buildNo.toString(),
+          buildTime: Date.now().toString(),
+        });
+      }
+    }
+
     const { originalFile, chunk, metajsFile, userjsFile } = fileInfo;
     const headersStr = headers.render({
+      prefix,
+      pretty,
+      suffix,
+    });
+    const proxyHeadersStr = proxyHeaders?.render({
       prefix,
       pretty,
       suffix,
@@ -321,14 +375,25 @@ export class UserscriptPlugin {
       userjsFile,
       new ConcatSource(headersStr, '\n', sourceAsset.source),
       {
-        related: { metajs: metajsFile },
         minimized: true,
       },
     );
-    compilation.emitAsset(metajsFile, new RawSource(headersStr), {
-      related: { userjs: userjsFile },
-      minimized: true,
-    });
+
+    if (metajs !== false) {
+      compilation.emitAsset(
+        metajsFile,
+        new RawSource(proxyHeadersStr ?? headersStr),
+        {
+          minimized: true,
+        },
+      );
+    }
+
+    if (proxyHeadersStr !== undefined && proxyScriptFile !== undefined) {
+      compilation.emitAsset(proxyScriptFile, new RawSource(proxyHeadersStr), {
+        minimized: true,
+      });
+    }
 
     chunk.files.add(userjsFile);
     chunk.auxiliaryFiles.add(metajsFile);

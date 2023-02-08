@@ -1,4 +1,5 @@
 import { HeadersReducer } from '../types';
+import { interpolate } from '../util';
 
 export const interpolateValues: HeadersReducer = ({
   fileInfo: { chunk, originalFile, filename, basename, query },
@@ -51,9 +52,3 @@ export const interpolateValues: HeadersReducer = ({
 
   return headers;
 };
-
-export function interpolate(str: string, data: Record<string, string>): string {
-  return Object.entries(data).reduce((value, [dataKey, dataVal]) => {
-    return value.replace(new RegExp(`\\[${dataKey}\\]`, 'g'), `${dataVal}`);
-  }, str);
-}

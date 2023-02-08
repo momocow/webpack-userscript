@@ -27,9 +27,10 @@ export const resolveUpdateBaseUrl: HeadersReducer = ({
   if (headers.updateURL === undefined) {
     return {
       ...headers,
-      updateURL: !options.metajs
-        ? headers.downloadURL
-        : new URL(fileInfo.metajsFile, options.updateBaseUrl).toString(),
+      updateURL:
+        options.metajs === false
+          ? headers.downloadURL
+          : new URL(fileInfo.metajsFile, options.updateBaseUrl).toString(),
     };
   }
   return headers;
