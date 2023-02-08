@@ -265,10 +265,7 @@ export class HeadersImpl implements StrictHeadersProps {
     suffix = '// ==/UserScript==\n',
     pretty = false,
   }: HeadersRenderOptions = {}): string {
-    const obj = instanceToPlain(this, { exposeUnsetFields: false }) as Record<
-      TagType,
-      Exclude<ValueType, undefined>
-    >;
+    const obj = this.toJSON();
     const rows = Object.entries(obj).flatMap(([tag, value]) =>
       this.renderTag(tag, value),
     );
@@ -287,10 +284,7 @@ export class HeadersImpl implements StrictHeadersProps {
     return prefix + body + suffix;
   }
 
-  protected renderTag(
-    tag: TagType,
-    value: Exclude<ValueType, undefined>,
-  ): string[][] {
+  protected renderTag(tag: TagType, value: ValueType): string[][] {
     if (Array.isArray(value)) {
       return value.map((v) => ['//', `@${tag}`, v]);
     }
@@ -299,7 +293,15 @@ export class HeadersImpl implements StrictHeadersProps {
       return Object.entries(value).map(([k, v]) => ['//', `@${tag}`, k, v]);
     }
 
-    return [['//', `@${tag}`, String(value)]];
+    if (typeof value === 'string') {
+      return [['//', `@${tag}`, value]];
+    }
+
+    if (value === true) {
+      return [['//', `@${tag}`]];
+    }
+
+    return [];
   }
 
   public validate({ whitelist }: HeadersValidateOptions = {}): void {

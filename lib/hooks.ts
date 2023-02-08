@@ -1,5 +1,6 @@
 import { URL } from 'url';
 
+import { Headers, HeadersProps } from './headers';
 import {
   HeadersWaterfall,
   ProcessHeadersAsyncHook,
@@ -73,3 +74,14 @@ export const resolveUpdateBaseUrl: ProcessHeadersHook = ({
 
 export const applyWhitelist: ProcessHeadersHook = ({ headers }) =>
   headers.update({}, { whitelist: true });
+
+export const fixTagName: ProcessHeadersHook = ({ headers: headersIn }) => {
+  let headers: HeadersProps & Headers = headersIn;
+  if (headers.updateUrl !== undefined) {
+    headers = headers.update({
+      updateURL: headers.updateUrl as HeadersProps['updateURL'],
+    });
+  }
+
+  return headers;
+};

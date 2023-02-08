@@ -52,7 +52,7 @@ export type SSRILock = Record<string, string>;
 export type SSRIMap = Map<string, IntegrityMap>;
 
 export interface HeadersWaterfall {
-  headers: Headers;
+  headers: HeadersProps;
   fileInfo: FileInfo;
   compilation: Compilation;
   options: UserscriptOptions;

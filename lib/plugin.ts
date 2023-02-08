@@ -173,7 +173,7 @@ export class UserscriptPlugin {
       }
     }
 
-    return { headers: this.headersFactory(headersProps), ssriLock, lockfile };
+    return { headers: headersProps, ssriLock, lockfile };
   }
 
   protected async emit(
@@ -249,15 +249,17 @@ export class UserscriptPlugin {
   ): Promise<void> {
     const { prefix, pretty, suffix, whitelist, strict } = this.options;
 
-    const { headers, ssriLock } = await this.hooks.processHeaders.promise({
-      headers: data.headers,
-      ssriLock: data.ssriLock,
-      fileInfo,
-      compilation,
-      options: this.options,
-    });
+    const { headers: headersProps, ssriLock } =
+      await this.hooks.processHeaders.promise({
+        headers: data.headers,
+        ssriLock: data.ssriLock,
+        fileInfo,
+        compilation,
+        options: this.options,
+      });
     data.ssriLock = ssriLock;
 
+    const headers = this.headersFactory(headersProps);
     if (strict) {
       headers.validate({ whitelist: whitelist ?? true });
     }
@@ -301,7 +303,7 @@ interface PackageJson {
 }
 
 interface CompilerData {
-  headers: Headers;
+  headers: HeadersProps;
   ssriLock?: SSRILock;
   lockfile?: string;
 }
