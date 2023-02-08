@@ -46,6 +46,9 @@ export interface FileInfo {
   originalFile: string;
   userjsFile: string;
   metajsFile: string;
+  filename: string;
+  basename: string;
+  query: string;
 }
 
 export type SSRILock = Record<string, string>;
@@ -55,6 +58,7 @@ export interface HeadersWaterfall {
   headers: HeadersProps;
   fileInfo: FileInfo;
   compilation: Compilation;
+  buildNo: number;
   options: UserscriptOptions;
   ssriLock?: SSRILock;
 }

@@ -9,7 +9,7 @@ import {
 import { Readable } from 'stream';
 import { URL } from 'url';
 
-import { HeadersProps } from './headers';
+import { HeadersProps } from '../headers';
 import {
   AsyncHeadersReducer,
   SSRIAlgorithm,
@@ -17,7 +17,7 @@ import {
   SSRIMap,
   SSRIOptions,
   SSRITag,
-} from './types';
+} from '../types';
 
 export const SSRI_MAP: Map<string, Map<SSRIAlgorithm, string>> = new Map();
 

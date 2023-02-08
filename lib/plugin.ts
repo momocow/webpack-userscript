@@ -8,11 +8,12 @@ import { Headers, HeadersProps } from './headers';
 import { wrapHook } from './hook';
 import {
   fixTagNames,
+  interpolateValues,
+  processSSRI,
   resolveDownloadBaseUrl,
   resolveUpdateBaseUrl,
   setDefaultMatch,
 } from './reducers';
-import { processSSRI } from './ssri';
 import {
   FileInfo,
   HeadersWaterfall,
@@ -36,7 +37,10 @@ export class UserscriptPlugin {
     let compilerData: CompilerData | undefined;
 
     compiler.hooks.beforeCompile.tapPromise(PLUGIN, async () => {
-      compilerData = await this.prepare(compiler);
+      if (!compilerData) {
+        compilerData = await this.prepare(compiler);
+      }
+      compilerData.buildNo++;
     });
 
     compiler.hooks.compilation.tap(PLUGIN, (compilation) => {
@@ -78,21 +82,29 @@ export class UserscriptPlugin {
         wrapHook(resolveDownloadBaseUrl),
       );
     }
+
     if (updateBaseUrl !== undefined) {
       this.hooks.processHeaders.tap(
         resolveUpdateBaseUrl.name,
         wrapHook(resolveUpdateBaseUrl),
       );
     }
+
     if (ssri) {
       this.hooks.processHeaders.tapPromise(
         processSSRI.name,
         wrapHook(processSSRI),
       );
     }
+
     this.hooks.processHeaders.tap(
       setDefaultMatch.name,
       wrapHook(setDefaultMatch),
+    );
+
+    this.hooks.processHeaders.tap(
+      interpolateValues.name,
+      wrapHook(interpolateValues),
     );
   }
 
@@ -167,7 +179,7 @@ export class UserscriptPlugin {
       }
     }
 
-    return { headers: headersProps, ssriLock, lockfile };
+    return { headers: headersProps, ssriLock, lockfile, buildNo: 0 };
   }
 
   protected async emit(
@@ -229,6 +241,9 @@ export class UserscriptPlugin {
           originalFile,
           userjsFile,
           metajsFile,
+          filename,
+          basename,
+          query,
         });
       }
     }
@@ -249,6 +264,7 @@ export class UserscriptPlugin {
         ssriLock: data.ssriLock,
         fileInfo,
         compilation,
+        buildNo: data.buildNo,
         options: this.options,
       });
     data.ssriLock = ssriLock;
@@ -297,6 +313,7 @@ interface PackageJson {
 }
 
 interface CompilerData {
+  buildNo: number;
   headers: HeadersProps;
   ssriLock?: SSRILock;
   lockfile?: string;
