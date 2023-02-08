@@ -70,6 +70,8 @@ export class UserscriptPlugin {
       );
     }
 
+    this.hooks.processHeaders.tap(fixTagNames.name, wrapHook(fixTagNames));
+
     if (downloadBaseUrl !== undefined) {
       this.hooks.processHeaders.tap(
         resolveDownloadBaseUrl.name,
@@ -92,8 +94,6 @@ export class UserscriptPlugin {
       setDefaultMatch.name,
       wrapHook(setDefaultMatch),
     );
-
-    this.hooks.processHeaders.tap(fixTagNames.name, wrapHook(fixTagNames));
   }
 
   protected headersFactory(props: HeadersProps): Readonly<Headers> {
