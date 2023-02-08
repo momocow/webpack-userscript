@@ -76,5 +76,8 @@
     "ssri": "^10.0.1",
     "table": "^6.8.1",
     "tapable": "^2.2.1"
+  },
+  "peerDependencies": {
+    "webpack": "5"
   }
 }

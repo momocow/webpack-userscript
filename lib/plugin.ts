@@ -22,17 +22,12 @@ import {
 const { ConcatSource, RawSource } = sources;
 
 export class UserscriptPlugin {
-  public static readonly DEFAULT_OPTIONS: Readonly<UserscriptOptions> = {};
   public readonly hooks = {
     processHeaders: new AsyncSeriesWaterfallHook<HeadersWaterfall>(['headers']),
   };
 
-  // protected readonly headersCache = new WeakMap<Source, CacheEntry>();
-
   public constructor(
-    public options: UserscriptOptions = {
-      ...UserscriptPlugin.DEFAULT_OPTIONS,
-    },
+    public readonly options: Readonly<UserscriptOptions> = {},
   ) {}
 
   public apply(compiler: Compiler): void {
@@ -218,7 +213,7 @@ export class UserscriptPlugin {
     data: CompilerData,
     fileInfo: FileInfo,
   ): Promise<void> {
-    const { headers: headersOption } = this.options;
+    const { headers: headersOption, prefix, pretty, suffix } = this.options;
 
     let headers = data.headers;
     if (typeof headersOption === 'function') {
@@ -237,7 +232,11 @@ export class UserscriptPlugin {
     data.ssriLock = ssriLock;
 
     const { originalFile, chunk, metajsFile, userjsFile } = fileInfo;
-    const headersStr = headers.render();
+    const headersStr = headers.render({
+      prefix,
+      pretty,
+      suffix,
+    });
     const sourceAsset = compilation.getAsset(originalFile);
     if (!sourceAsset) {
       return;

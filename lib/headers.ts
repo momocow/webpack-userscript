@@ -14,6 +14,7 @@ import {
   IsUrl,
   validateSync,
 } from 'class-validator';
+import { getBorderCharacters, table } from 'table';
 
 export interface HeadersFactoryOptions {
   strict: boolean;
@@ -251,34 +252,45 @@ export class HeadersImpl implements StrictHeadersProps {
   }
 
   public render({
-    prefix = '// ==UserScript==',
-    suffix = '// ==/UserScript==',
+    prefix = '// ==UserScript==\n',
+    suffix = '// ==/UserScript==\n',
+    pretty = false,
   }: HeadersRenderOptions = {}): string {
     const obj = instanceToPlain(this, { exposeUnsetFields: false }) as Record<
       TagType,
       Exclude<ValueType, undefined>
     >;
-    const body = Object.entries(obj)
-      .map(([tag, value]) => this.renderTag(tag, value))
-      .join('\n');
-    return [prefix, body, suffix].join('\n');
+    const rows = Object.entries(obj).flatMap(([tag, value]) =>
+      this.renderTag(tag, value),
+    );
+
+    const body = pretty
+      ? table(rows, {
+          border: getBorderCharacters('void'),
+          columnDefault: {
+            paddingLeft: 0,
+            paddingRight: 1,
+          },
+          drawHorizontalLine: () => false,
+        })
+      : rows.map((cols) => cols.join(' ')).join('\n') + '\n';
+
+    return prefix + body + suffix;
   }
 
   protected renderTag(
     tag: TagType,
     value: Exclude<ValueType, undefined>,
-  ): string {
+  ): string[][] {
     if (Array.isArray(value)) {
-      return value.map((v) => `// @${tag} ${v}`).join('\n');
+      return value.map((v) => ['//', `@${tag}`, v]);
     }
 
     if (typeof value === 'object') {
-      return Object.entries(value)
-        .map(([k, v]) => `// @${tag} ${k} ${v}`)
-        .join('\n');
+      return Object.entries(value).map(([k, v]) => ['//', `@${tag}`, k, v]);
     }
 
-    return `// @${tag} ${String(value)}`;
+    return [['//', `@${tag}`, String(value)]];
   }
 
   public static fromJSON<T extends HeadersImpl>(

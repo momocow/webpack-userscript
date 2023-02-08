@@ -8,6 +8,9 @@ export interface UserscriptOptions {
   root?: string;
   metajs?: boolean;
   headers?: HeadersOption;
+  pretty?: boolean;
+  prefix?: string;
+  suffix?: string;
   strict?: boolean;
   whitelist?: boolean;
   downloadBaseUrl?: string;
