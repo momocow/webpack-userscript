@@ -40,13 +40,21 @@ export class UserscriptPlugin {
       if (!data) {
         data = await this.init(compiler);
       }
-      await this.prepare(compiler, data);
     });
 
     compiler.hooks.compilation.tap(PLUGIN, (compilation) => {
       compilation.hooks.processAssets.tapPromise(
+        { name: PLUGIN, stage: Compilation.PROCESS_ASSETS_STAGE_PRE_PROCESS },
+        async () => {
+          if (!data) return;
+          await this.prepare(compilation, data);
+        },
+      );
+      compilation.hooks.processAssets.tapPromise(
         {
           name: PLUGIN,
+          // we should generate userscript files
+          // only if optimization of source files are complete
           stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
         },
         async () => {
@@ -159,7 +167,7 @@ export class UserscriptPlugin {
     let ssriLock: SSRILock | undefined;
     if (ssri) {
       if (typeof ssri === 'object' && typeof ssri.lock === 'string') {
-        lockfile = ssri.lock;
+        lockfile = path.join(root ?? context, ssri.lock);
       } else if (ssri === true || ssri.lock === true) {
         lockfile = path.join(root ?? context, 'ssri-lock.json');
       }
@@ -178,17 +186,29 @@ export class UserscriptPlugin {
   }
 
   protected async prepare(
-    compiler: Compiler,
+    compilation: Compilation,
     data: CompilerData,
   ): Promise<void> {
-    const { inputFileSystem } = compiler;
-    const { headers } = this.options;
+    const {
+      inputFileSystem,
+      compiler: { context },
+    } = compilation;
+    const { headers, root } = this.options;
 
     if (typeof headers === 'string') {
+      const headersFile =
+        data.headersFile ?? path.join(root ?? context, headers);
+
       Object.assign(
         data.headers,
-        await readJSON<HeadersProps>(headers, inputFileSystem as FsReadFile),
+        await readJSON<HeadersProps>(
+          headersFile,
+          inputFileSystem as FsReadFile,
+        ),
       );
+
+      compilation.fileDependencies.add(headersFile);
+      data.headersFile = headersFile;
     }
 
     data.buildNo++;
@@ -327,6 +347,7 @@ interface PackageJson {
 interface CompilerData {
   buildNo: number;
   headers: HeadersProps;
+  headersFile?: string;
   ssriLock?: SSRILock;
   lockfile?: string;
 }
