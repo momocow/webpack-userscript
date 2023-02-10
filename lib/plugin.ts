@@ -3,7 +3,14 @@ import path from 'node:path';
 import { AsyncSeriesWaterfallHook } from 'tapable';
 import { Compilation, Compiler, sources } from 'webpack';
 
-import { findPackage, FsReadFile, FsStat, readJSON, writeJSON } from './fs';
+import {
+  findPackage,
+  FsReadFile,
+  FsStat,
+  FsWriteFile,
+  readJSON,
+  writeJSON,
+} from './fs';
 import { Headers, HeadersProps } from './headers';
 import { wrapHook } from './hook';
 import {
@@ -245,11 +252,17 @@ export class UserscriptPlugin {
   }
 
   protected async shutdown(
-    _: Compiler,
+    { intermediateFileSystem }: Compiler,
     { lockfile, ssriLock }: CompilerData,
   ): Promise<void> {
+    console.log(lockfile, ssriLock);
+
     if (lockfile !== undefined) {
-      await writeJSON(lockfile, ssriLock);
+      await writeJSON(
+        lockfile,
+        ssriLock,
+        intermediateFileSystem as FsWriteFile,
+      );
     }
   }
 

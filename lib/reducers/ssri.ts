@@ -19,8 +19,6 @@ import {
   SSRITag,
 } from '../types';
 
-export const SSRI_MAP: Map<string, Map<SSRIAlgorithm, string>> = new Map();
-
 const concurrency = parseInt(process.env.WPUS_SSRI_CONCURRENCY ?? '');
 const limit = pLimit(Number.isNaN(concurrency) ? 6 : concurrency);
 
@@ -48,43 +46,55 @@ export const processSSRI: AsyncHeadersReducer = async (data) => {
   // merge integrities from ssri-lock
   // and those provided within headers option (in respective tags)
   const ssriMap = new Map(
-    targetURLs
-      .map((url) => {
-        const ssriMap = parseSSRI(parseSSRILike(url), {
-          strict: true,
-        });
-        ssriMap.merge(ssriMapFromLock.get(url), { strict: true });
+    targetURLs.map((url) => {
+      const integrity = parseSSRI(parseSSRILike(url), {
+        strict: true,
+      }) as IntegrityMap | null;
+      if (integrity) {
+        integrity.merge(ssriMapFromLock.get(url), { strict: true });
+      }
 
-        return [normalizeURL(url), ssriMap] as const;
-      })
-      .filter(([, integrity]) => !!integrity),
+      return [normalizeURL(url), integrity] as const;
+    }),
   );
 
   // compute and merge missing hashes based on specified algorithms option
-  await Promise.all(
+  const newSSRIEntries = await Promise.all(
     Array.from(ssriMap).map(([url, integrity]) =>
       limit(async () => {
-        integrity.merge(
-          await computeSSRI(
-            url,
-            ssriOptions.algorithms?.filter((alg) => !integrity[alg]) ?? [],
-            {
-              strict: true,
-            },
-          ),
+        const newIntegrity = await computeSSRI(
+          url,
+          ssriOptions.algorithms?.filter((alg) => !integrity?.[alg]) ?? [
+            'sha512',
+          ],
+          {
+            strict: true,
+          },
         );
+
+        if (integrity) {
+          integrity.merge(newIntegrity);
+        }
+
+        return [url, integrity ?? newIntegrity] as const;
       }),
     ),
   );
 
+  const newSSRIMap = new Map(
+    newSSRIEntries.filter(
+      (entry): entry is [string, IntegrityMap] => !!entry[1],
+    ),
+  );
+
   // preserve ssri-lock
-  if (ssriLock) {
-    data.ssriLock = toSSRILock(ssriMap);
+  if (newSSRIMap.size > 0) {
+    data.ssriLock = toSSRILock(newSSRIMap);
   }
 
   return {
     ...headers,
-    ...patchHeaders(headers, ssriMap),
+    ...patchHeaders(headers, newSSRIMap),
   };
 };
 

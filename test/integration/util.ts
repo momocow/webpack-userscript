@@ -1,6 +1,8 @@
+import { AddressInfo } from 'node:net';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
+import express, { static as expressStatic } from 'express';
 import { createFsFromVolume } from 'memfs';
 import { Configuration, webpack } from 'webpack';
 
@@ -16,9 +18,11 @@ export async function compile(
 
   const output = new Volume();
   compiler.inputFileSystem = createFsFromVolume(input);
-  compiler.outputFileSystem = createFsFromVolume(output);
+  compiler.intermediateFileSystem = compiler.outputFileSystem =
+    createFsFromVolume(output);
 
   const stats = await promisify(compiler.run.bind(compiler))();
+  await promisify(compiler.close.bind(compiler))();
 
   if (stats?.hasErrors() || stats?.hasWarnings()) {
     const details = stats.toJson();
@@ -32,6 +36,26 @@ export async function compile(
   }
 
   return output;
+}
+
+export interface ServeStatic {
+  port: number;
+  close: () => Promise<void>;
+}
+
+export async function servceStatic(root: string): Promise<ServeStatic> {
+  return new Promise((resolve, reject) => {
+    const app = express();
+    app.use(expressStatic(root));
+    const server = app
+      .listen(() => {
+        const { port } = server.address() as AddressInfo;
+        resolve({ port, close: promisify(server.close.bind(server)) });
+      })
+      .on('error', (err) => {
+        reject(err);
+      });
+  });
 }
 
 export function escapeRegex(str: string): string {
