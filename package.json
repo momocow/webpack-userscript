@@ -28,7 +28,7 @@
     "test": "jest",
     "clean": "shx rm -rf dist build package",
     "ts-node": "ts-node",
-    "docs": "typedoc --entryPoints lib/index.ts",
+    "docs": "typedoc",
     "build": "tsc -p tsconfig.build.json",
     "commit": "gitmoji -c",
     "prepare": "husky install",
