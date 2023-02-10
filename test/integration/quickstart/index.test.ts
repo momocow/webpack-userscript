@@ -16,19 +16,13 @@ describe('quickstart', () => {
 
   it('should successfully compile with default options', async () => {
     const output = await compile(input, {
-      context: '/',
-      mode: 'production',
-      entry: '/entry.js',
-      output: {
-        path: '/dist',
-        filename: 'quickstart.js',
-      },
+      ...Fixtures.webpackConfig,
       plugins: [new UserscriptPlugin()],
     });
 
     expect(output.toJSON()).toEqual({
-      '/dist/quickstart.user.js': Fixtures.entryUserJs(Fixtures.headers),
-      '/dist/quickstart.meta.js': Fixtures.headers,
+      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.headers),
+      '/dist/output.meta.js': Fixtures.headers,
     });
   });
 });

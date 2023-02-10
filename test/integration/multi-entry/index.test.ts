@@ -27,8 +27,7 @@ describe('multi-entry', () => {
     );
 
     const output = await compile(input, {
-      context: '/',
-      mode: 'production',
+      ...Fixtures.webpackConfig,
       entry: {
         entry1: '/entry1.js',
         entry2: '/entry2.js',

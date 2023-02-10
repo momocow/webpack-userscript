@@ -23,13 +23,7 @@ describe('headers', () => {
       );
 
       const output = await compile(input, {
-        context: '/',
-        mode: 'production',
-        entry: '/entry.js',
-        output: {
-          path: '/dist',
-          filename: 'output.js',
-        },
+        ...Fixtures.webpackConfig,
         plugins: [
           new UserscriptPlugin({
             headers: {

@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { Configuration } from 'webpack';
+
 export const FIXTURES_DIR = path.join(__dirname, 'fixtures');
 
 export const File =
@@ -26,6 +28,16 @@ export class GlobalFixtures {
 
   @File(FIXTURES_DIR, 'package.json.txt')
   public static readonly packageJson: string;
+
+  public static readonly webpackConfig: Configuration = Object.seal({
+    context: '/',
+    mode: 'production',
+    entry: '/entry.js',
+    output: {
+      path: '/dist',
+      filename: 'output.js',
+    },
+  });
 
   public static entryUserJs(headers: string): string {
     return headers + '\n' + this.entryMinJs;

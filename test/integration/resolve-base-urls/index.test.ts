@@ -34,13 +34,7 @@ describe('default match tag', () => {
   // eslint-disable-next-line max-len
   it('should use default match if no include or match specified', async () => {
     const output = await compile(input, {
-      context: '/',
-      mode: 'production',
-      entry: '/entry.js',
-      output: {
-        path: '/dist',
-        filename: 'output.js',
-      },
+      ...Fixtures.webpackConfig,
       plugins: [new UserscriptPlugin()],
     });
 
@@ -57,13 +51,7 @@ describe('default match tag', () => {
 
   it('should not use default match if include is provided', async () => {
     const output = await compile(input, {
-      context: '/',
-      mode: 'production',
-      entry: '/entry.js',
-      output: {
-        path: '/dist',
-        filename: 'output.js',
-      },
+      ...Fixtures.webpackConfig,
       plugins: [
         new UserscriptPlugin({
           headers: {
@@ -89,13 +77,7 @@ describe('default match tag', () => {
 
   it('should not use default match if match is provided', async () => {
     const output = await compile(input, {
-      context: '/',
-      mode: 'production',
-      entry: '/entry.js',
-      output: {
-        path: '/dist',
-        filename: 'output.js',
-      },
+      ...Fixtures.webpackConfig,
       plugins: [
         new UserscriptPlugin({
           headers: {

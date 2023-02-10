@@ -16,13 +16,7 @@ describe('load-headers', () => {
 
   it('can be loaded from headers object', async () => {
     const output = await compile(input, {
-      context: '/',
-      mode: 'production',
-      entry: '/entry.js',
-      output: {
-        path: '/dist',
-        filename: 'output.js',
-      },
+      ...Fixtures.webpackConfig,
       plugins: [
         new UserscriptPlugin({
           headers: {
@@ -42,13 +36,7 @@ describe('load-headers', () => {
     input.writeFileSync('/headers.json', Fixtures.headersJson);
 
     const output = await compile(input, {
-      context: '/',
-      mode: 'production',
-      entry: '/entry.js',
-      output: {
-        path: '/dist',
-        filename: 'output.js',
-      },
+      ...Fixtures.webpackConfig,
       plugins: [
         new UserscriptPlugin({
           headers: '/headers.json',
@@ -66,13 +54,7 @@ describe('load-headers', () => {
     input.writeFileSync('/headers.json', '{"name": "invalid-json",');
 
     const promise = compile(input, {
-      context: '/',
-      mode: 'production',
-      entry: '/entry.js',
-      output: {
-        path: '/dist',
-        filename: 'output.js',
-      },
+      ...Fixtures.webpackConfig,
       plugins: [
         new UserscriptPlugin({
           headers: '/headers.json',
@@ -86,13 +68,7 @@ describe('load-headers', () => {
   describe('headers provider', () => {
     it('can be loaded from headers provider function', async () => {
       const output = await compile(input, {
-        context: '/',
-        mode: 'production',
-        entry: '/entry.js',
-        output: {
-          path: '/dist',
-          filename: 'output.js',
-        },
+        ...Fixtures.webpackConfig,
         plugins: [
           new UserscriptPlugin({
             headers: ({ headers }): HeadersProps => ({
@@ -113,13 +89,7 @@ describe('load-headers', () => {
 
     it('can be loaded from async headers provider function', async () => {
       const output = await compile(input, {
-        context: '/',
-        mode: 'production',
-        entry: '/entry.js',
-        output: {
-          path: '/dist',
-          filename: 'output.js',
-        },
+        ...Fixtures.webpackConfig,
         plugins: [
           new UserscriptPlugin({
             headers: async ({ headers }): Promise<HeadersProps> => ({
