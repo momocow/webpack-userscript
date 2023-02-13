@@ -45,27 +45,33 @@ describe('headers', () => {
     });
   });
 
-  // it('should be rendered prettily', async () => {
-  //   const output = await compile(input, {
-  //     context: '/',
-  //     mode: 'production',
-  //     entry: '/entry.js',
-  //     output: {
-  //       path: '/dist',
-  //       filename: 'pretty.js',
-  //     },
-  //     plugins: [
-  //       new UserscriptPlugin({
-  //         // pretty: true,
-  //       }),
-  //     ],
-  //   });
+  it('should be rendered prettily', async () => {
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      plugins: [
+        new UserscriptPlugin({
+          headers: {
+            resource: {
+              test: 'http://example.com/demo.jpg',
+            },
+          },
+          pretty: true,
+        }),
+      ],
+    });
 
-  //   expect(output.toJSON()).toEqual({
-  //     '/dist/pretty.user.js': '',
-  //     '/dist/pretty.meta.js': '',
-  //   });
-  // });
+    console.log(
+      output
+        .readFileSync('/dist/output.user.js', 'utf-8')
+        .toString()
+        .split('\n'),
+    );
+
+    expect(output.toJSON()).toEqual({
+      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.prettyHeaders),
+      '/dist/output.meta.js': Fixtures.prettyHeaders,
+    });
+  });
 
   it.todo('should respect the specified tag order');
 });
