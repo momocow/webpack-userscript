@@ -24,6 +24,7 @@ export interface HeadersRenderOptions {
   prefix?: string;
   suffix?: string;
   pretty?: boolean;
+  tagOrder?: TagType[];
 }
 
 export interface HeadersValidateOptions {
@@ -249,11 +250,17 @@ export class Headers implements StrictHeadersProps {
     prefix = '// ==UserScript==\n',
     suffix = '// ==/UserScript==\n',
     pretty = false,
+    tagOrder = ['name', 'description', 'version', 'author'],
   }: HeadersRenderOptions = {}): string {
+    const orderRevMap = new Map(tagOrder.map((tag, index) => [tag, index]));
     const obj = this.toJSON();
-    const rows = Object.entries(obj).flatMap(([tag, value]) =>
-      this.renderTag(tag, value),
-    );
+    const rows = Object.entries(obj)
+      .sort(
+        ([tag1], [tag2]) =>
+          (orderRevMap.get(tag1) ?? orderRevMap.size) -
+          (orderRevMap.get(tag2) ?? orderRevMap.size),
+      )
+      .flatMap(([tag, value]) => this.renderTag(tag, value));
 
     const body = pretty
       ? table(rows, {
@@ -271,19 +278,19 @@ export class Headers implements StrictHeadersProps {
 
   protected renderTag(tag: TagType, value: ValueType): string[][] {
     if (Array.isArray(value)) {
-      return value.map((v) => ['//', `@${tag}`, v]);
+      return value.map((v) => [`// @${tag}`, v]);
     }
 
     if (typeof value === 'object') {
-      return Object.entries(value).map(([k, v]) => ['//', `@${tag}`, k, v]);
+      return Object.entries(value).map(([k, v]) => [`// @${tag}`, `${k} ${v}`]);
     }
 
     if (typeof value === 'string') {
-      return [['//', `@${tag}`, value]];
+      return [[`// @${tag}`, value]];
     }
 
     if (value === true) {
-      return [['//', `@${tag}`]];
+      return [[`// @${tag}`]];
     }
 
     return [];
