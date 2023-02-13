@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name entry3
-// @version 0.0.0
 // @description this is a fantastic userscript
+// @version 0.0.0
 // @match *://*/*
 // ==/UserScript==

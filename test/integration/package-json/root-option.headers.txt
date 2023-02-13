@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name package-json-deep
-// @version 0.0.1
 // @description description of package-json-deep
+// @version 0.0.1
 // @author author of package-json-deep
 // @homepage https://homepage.package-json-deep.com/
 // @match *://*/*
