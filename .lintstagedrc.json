@@ -1,4 +1,3 @@
 {
-  "**/*.!(ts)": "prettier --write --ignore-unknown",
   "**/*.ts": ["prettier --write", "eslint --fix"]
 }

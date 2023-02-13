@@ -73,3 +73,14 @@ export function findTags(
     ) ?? []
   );
 }
+
+export function template<T extends Record<string, string>>(
+  tpl: string,
+): (data: T) => string {
+  return function (data: T): string {
+    return tpl.replace(
+      /\$\{([^}]+)\}/g,
+      (matched, matchedKey) => data[matchedKey] ?? matched,
+    );
+  };
+}

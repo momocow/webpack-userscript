@@ -9,9 +9,13 @@ import { Fixtures } from './fixtures';
 describe('ssri', () => {
   let input: Volume;
   let server: ServeStatic;
+  let tplData: { PORT: string };
 
   beforeAll(async () => {
-    server = await servceStatic(path.join(__dirname, 'fixtures'));
+    server = await servceStatic(path.join(__dirname, 'static'));
+    tplData = {
+      PORT: String(server.port),
+    };
   });
 
   afterAll(async () => {
@@ -39,12 +43,11 @@ describe('ssri', () => {
     });
 
     expect(output.toJSON()).toEqual({
-      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.headers),
-      '/dist/output.meta.js': Fixtures.headers,
-      '/ssri-lock.json': Fixtures.ssriLockJson.replace(
-        '${PORT}',
-        String(server.port),
+      '/dist/output.user.js': Fixtures.entryUserJs(
+        Fixtures.ssriHeaders(tplData),
       ),
+      '/dist/output.meta.js': Fixtures.ssriHeaders(tplData),
+      '/ssri-lock.json': Fixtures.ssriLockJson(tplData),
     });
   });
 });
