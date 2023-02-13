@@ -250,7 +250,17 @@ export class Headers implements StrictHeadersProps {
     prefix = '// ==UserScript==\n',
     suffix = '// ==/UserScript==\n',
     pretty = false,
-    tagOrder = ['name', 'description', 'version', 'author'],
+    tagOrder = [
+      'name',
+      'description',
+      'version',
+      'author',
+      'homepage',
+      'supportURL',
+      'include',
+      'exclude',
+      'match',
+    ],
   }: HeadersRenderOptions = {}): string {
     const orderRevMap = new Map(tagOrder.map((tag, index) => [tag, index]));
     const obj = this.toJSON();
