@@ -255,8 +255,6 @@ export class UserscriptPlugin {
     { intermediateFileSystem }: Compiler,
     { lockfile, ssriLock }: CompilerData,
   ): Promise<void> {
-    console.log(lockfile, ssriLock);
-
     if (lockfile !== undefined) {
       await writeJSON(
         lockfile,

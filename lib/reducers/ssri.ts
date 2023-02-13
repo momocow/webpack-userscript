@@ -166,11 +166,12 @@ export async function computeSSRI(
 
   const response = await fetch(url);
 
-  if (response.body === null)
+  if (response.status !== 200 || response.body === null) {
     throw new Error(
-      `Null response body received when computing SSRI. ` +
-        `${response.status} ${response.statusText} ${url}`,
+      `Failed to fetch SSRI sources. ` +
+        `[${response.status} ${response.statusText}] ${url}`,
     );
+  }
 
   return await fromStream(response.body as Readable, {
     algorithms,
