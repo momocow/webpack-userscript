@@ -28,6 +28,13 @@ export interface FsWriteFile {
   ): void;
 }
 
+export interface FsMkdir {
+  mkdir(
+    path: string,
+    callback: (err: Error | null, path?: string) => void,
+  ): void;
+}
+
 export async function findPackage(
   cwd: string,
   fs: FsStat = _fs,
@@ -68,4 +75,12 @@ export async function writeJSON(
 ): Promise<void> {
   const writeFileAsync = promisify(fs.writeFile);
   await writeFileAsync(file, Buffer.from(JSON.stringify(data), 'utf-8'));
+}
+
+export async function mkdirp(
+  dir: string,
+  fs: FsMkdir = _fs,
+): Promise<string | undefined> {
+  const mkdirAsync = promisify(fs.mkdir);
+  return await mkdirAsync(dir);
 }

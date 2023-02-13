@@ -37,7 +37,6 @@ export interface SSRIOptions {
   include?: URLFilter;
   exclude?: URLFilter;
   algorithms?: SSRIAlgorithm[];
-  integrity?: string;
   strict?: boolean;
   lock?: boolean | string;
 }

@@ -29,7 +29,11 @@ export const processSSRI: AsyncHeadersReducer = async (data) => {
     options: { ssri },
   } = data;
 
-  if (headers.resource == undefined && headers.require === undefined) {
+  if (
+    (headers.resource == undefined ||
+      Object.entries(headers.resource).length === 0) &&
+    (headers.require === undefined || headers.require.length === 0)
+  ) {
     return headers;
   }
 
@@ -50,29 +54,37 @@ export const processSSRI: AsyncHeadersReducer = async (data) => {
       const integrity = parseSSRI(parseSSRILike(url), {
         strict: true,
       }) as IntegrityMap | null;
-      if (integrity) {
-        integrity.merge(ssriMapFromLock.get(url), { strict: true });
+      const normalizedUrl = normalizeURL(url);
+      const integrityFromLock = ssriMapFromLock.get(normalizedUrl);
+
+      if (integrity && integrityFromLock) {
+        integrity.merge(ssriMapFromLock.get(normalizedUrl), { strict: true });
       }
 
-      return [normalizeURL(url), integrity] as const;
+      return [normalizedUrl, integrity ?? integrityFromLock] as const;
     }),
   );
 
   // compute and merge missing hashes based on specified algorithms option
+  let dirty = false;
   const newSSRIEntries = await Promise.all(
     Array.from(ssriMap).map(([url, integrity]) =>
       limit(async () => {
-        const newIntegrity = await computeSSRI(
-          url,
-          ssriOptions.algorithms?.filter((alg) => !integrity?.[alg]) ?? [
-            'sha512',
-          ],
-          {
-            strict: true,
-          },
+        const expectedAlgorithms = ssriOptions.algorithms ?? ['sha512'];
+        const missingAlgorithms = expectedAlgorithms.filter(
+          (alg) => !integrity?.[alg],
         );
 
-        if (integrity) {
+        dirty ||= missingAlgorithms.length > 0;
+
+        const newIntegrity =
+          missingAlgorithms.length > 0
+            ? await computeSSRI(url, missingAlgorithms, {
+                strict: ssriOptions.strict,
+              })
+            : null;
+
+        if (integrity && newIntegrity) {
           integrity.merge(newIntegrity);
         }
 
@@ -88,7 +100,7 @@ export const processSSRI: AsyncHeadersReducer = async (data) => {
   );
 
   // preserve ssri-lock
-  if (newSSRIMap.size > 0) {
+  if (dirty && newSSRIMap.size > 0) {
     data.ssriLock = toSSRILock(newSSRIMap);
   }
 
@@ -161,9 +173,7 @@ export async function computeSSRI(
   url: string,
   algorithms: SSRIAlgorithm[],
   { strict }: SSRIOptions,
-): Promise<IntegrityMap | undefined> {
-  if (algorithms.length === 0) return undefined;
-
+): Promise<IntegrityMap> {
   const response = await fetch(url);
 
   if (response.status !== 200 || response.body === null) {

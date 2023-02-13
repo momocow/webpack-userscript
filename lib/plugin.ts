@@ -5,9 +5,11 @@ import { Compilation, Compiler, sources } from 'webpack';
 
 import {
   findPackage,
+  FsMkdir,
   FsReadFile,
   FsStat,
   FsWriteFile,
+  mkdirp,
   readJSON,
   writeJSON,
 } from './fs';
@@ -76,9 +78,9 @@ export class UserscriptPlugin {
       );
     });
 
-    compiler.hooks.shutdown.tapPromise(PLUGIN, async () => {
+    compiler.hooks.done.tapPromise(PLUGIN, async () => {
       if (!data) return;
-      await this.shutdown(compiler, data);
+      await this.finish(compiler, data);
     });
 
     this.applyHooks();
@@ -188,7 +190,7 @@ export class UserscriptPlugin {
     if (ssri) {
       if (typeof ssri === 'object' && typeof ssri.lock === 'string') {
         lockfile = path.join(root ?? context, ssri.lock);
-      } else if (ssri === true || ssri.lock === true) {
+      } else if (ssri === true || ssri.lock !== false) {
         lockfile = path.join(root ?? context, 'ssri-lock.json');
       }
 
@@ -202,7 +204,13 @@ export class UserscriptPlugin {
       }
     }
 
-    return { headers: headersProps, ssriLock, lockfile, buildNo: 0 };
+    return {
+      headers: headersProps,
+      ssriLock,
+      lockfile,
+      buildNo: 0,
+      lockDirty: false,
+    };
   }
 
   protected async prepare(
@@ -251,17 +259,11 @@ export class UserscriptPlugin {
     }
   }
 
-  protected async shutdown(
-    { intermediateFileSystem }: Compiler,
-    { lockfile, ssriLock }: CompilerData,
+  protected async finish(
+    compiler: Compiler,
+    data: CompilerData,
   ): Promise<void> {
-    if (lockfile !== undefined) {
-      await writeJSON(
-        lockfile,
-        ssriLock,
-        intermediateFileSystem as FsWriteFile,
-      );
-    }
+    await this.writeSSRILock(compiler, data);
   }
 
   protected analyzeFileInfo(compilation: Compilation): FileInfo[] {
@@ -324,7 +326,8 @@ export class UserscriptPlugin {
         buildNo: data.buildNo,
         options: this.options,
       });
-    data.ssriLock = ssriLock;
+
+    this.updateSSRILock(data, ssriLock);
 
     const headers = this.headersFactory(headersProps);
     if (strict) {
@@ -409,6 +412,38 @@ export class UserscriptPlugin {
     chunk.files.add(userjsFile);
     chunk.auxiliaryFiles.add(metajsFile);
   }
+
+  protected updateSSRILock(data: CompilerData, ssriLock?: SSRILock): void {
+    if (data.ssriLock !== ssriLock) {
+      data.lockDirty = true;
+      data.ssriLock = ssriLock;
+    }
+  }
+
+  protected async writeSSRILock(
+    compiler: Compiler,
+    data: CompilerData,
+  ): Promise<void> {
+    const { intermediateFileSystem } = compiler;
+    const { lockfile, ssriLock, lockDirty } = data;
+
+    if (lockfile !== undefined && lockDirty) {
+      const dir = path.dirname(lockfile);
+      const isNotRoot = path.dirname(dir) !== dir;
+
+      if (isNotRoot) {
+        await mkdirp(dir, intermediateFileSystem as FsMkdir);
+      }
+
+      await writeJSON(
+        lockfile,
+        ssriLock,
+        intermediateFileSystem as FsWriteFile,
+      );
+
+      data.lockDirty = false;
+    }
+  }
 }
 
 interface PackageJson {
@@ -426,4 +461,5 @@ interface CompilerData {
   headersFile?: string;
   ssriLock?: SSRILock;
   lockfile?: string;
+  lockDirty: boolean;
 }
