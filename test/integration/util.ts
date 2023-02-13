@@ -3,23 +3,32 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 import express, { static as expressStatic } from 'express';
-import { createFsFromVolume } from 'memfs';
 import { Configuration, webpack } from 'webpack';
 
-import { Volume } from './volume';
+import { createFsFromVolume, Volume } from './volume';
 
 export const GLOBAL_FIXTURES_DIR = path.join(__dirname, 'fixtures');
 
 export async function compile(
   input: Volume,
   webpackConfig: Configuration,
+  {
+    inputFileSystem,
+    intermediateFileSystem,
+    outputFileSystem,
+  }: {
+    inputFileSystem?: Volume;
+    intermediateFileSystem?: Volume;
+    outputFileSystem?: Volume;
+  } = {},
 ): Promise<Volume> {
   const compiler = webpack(webpackConfig);
 
   const output = new Volume();
-  compiler.inputFileSystem = createFsFromVolume(input);
-  compiler.intermediateFileSystem = compiler.outputFileSystem =
-    createFsFromVolume(output);
+  compiler.inputFileSystem = inputFileSystem ?? createFsFromVolume(input);
+  compiler.outputFileSystem = outputFileSystem ?? createFsFromVolume(output);
+  compiler.intermediateFileSystem =
+    intermediateFileSystem ?? (compiler.outputFileSystem as Volume);
 
   const stats = await promisify(compiler.run.bind(compiler))();
   await promisify(compiler.close.bind(compiler))();

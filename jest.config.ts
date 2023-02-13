@@ -4,6 +4,7 @@ import { pathsToModuleNameMapper } from 'ts-jest';
 const { compilerOptions } = require('./tsconfig.json');
 
 module.exports = {
+  clearMocks: true,
   testMatch: [
     '**/__tests__/**/*.+(ts|tsx|js)',
     '**/?(*.)+(spec|test).+(ts|tsx|js)',
