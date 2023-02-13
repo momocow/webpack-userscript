@@ -2,8 +2,8 @@
 // @name userscript
 // @description this is a fantastic userscript
 // @version 0.0.0
+// @match *://*/*
 // @require http://localhost:${PORT}/jquery-3.4.1.min.js#sha512-udvAjJhK48f9RIIuwumiLLjPfaVfo5ddu9w/GP1+eneT6Nk2BIJldOPdak+YLXr0+Wwa9eENhHuDlKNKgsOYug==
 // @require http://example.com/example.txt
 // @resource legacy-badge http://localhost:${PORT}/travis-webpack-userscript.svg
-// @match *://*/*
 // ==/UserScript==
