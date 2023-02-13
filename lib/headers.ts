@@ -281,6 +281,9 @@ export class Headers implements StrictHeadersProps {
           },
           drawHorizontalLine: () => false,
         })
+          .split('\n')
+          .map((line) => line.trim())
+          .join('\n')
       : rows.map((cols) => cols.join(' ')).join('\n') + '\n';
 
     return prefix + body + suffix;
