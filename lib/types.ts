@@ -2,17 +2,21 @@ import { IntegrityMap } from 'ssri';
 import { URL } from 'url';
 import { Chunk, Compilation } from 'webpack';
 
-import { HeadersProps } from './headers';
+import {
+  HeadersFactoryOptions,
+  HeadersProps,
+  HeadersRenderOptions,
+  HeadersValidateOptions,
+} from './headers';
 
-export interface UserscriptOptions {
+export interface UserscriptOptions
+  extends HeadersRenderOptions,
+    HeadersFactoryOptions,
+    HeadersValidateOptions {
   root?: string;
   metajs?: boolean;
   headers?: HeadersOption;
-  pretty?: boolean;
-  prefix?: string;
-  suffix?: string;
   strict?: boolean;
-  whitelist?: boolean;
   downloadBaseUrl?: string;
   updateBaseUrl?: string;
   ssri?: true | SSRIOptions;

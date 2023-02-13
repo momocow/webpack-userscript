@@ -29,18 +29,14 @@ export const processSSRI: AsyncHeadersReducer = async (data) => {
     options: { ssri },
   } = data;
 
-  if (
-    (headers.resource == undefined ||
-      Object.entries(headers.resource).length === 0) &&
-    (headers.require === undefined || headers.require.length === 0)
-  ) {
-    return headers;
-  }
-
   const ssriOptions: SSRIOptions =
     ssri === true || ssri === undefined ? {} : ssri;
 
   const targetURLs = getTargetURLs(headers, ssriOptions);
+
+  if (targetURLs.length === 0) {
+    return headers;
+  }
 
   // restore ssri-lock
   const ssriMapFromLock: SSRIMap = ssriLock
