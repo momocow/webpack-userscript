@@ -60,18 +60,27 @@ describe('headers', () => {
       ],
     });
 
-    console.log(
-      output
-        .readFileSync('/dist/output.user.js', 'utf-8')
-        .toString()
-        .split('\n'),
-    );
-
     expect(output.toJSON()).toEqual({
       '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.prettyHeaders),
       '/dist/output.meta.js': Fixtures.prettyHeaders,
     });
   });
 
-  it.todo('should respect the specified tag order');
+  it('should respect the specified tag order', async () => {
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      plugins: [
+        new UserscriptPlugin({
+          // though "@include" tag does not present in the headers,
+          // it is fine to be in the tagOrder list
+          tagOrder: ['include', 'match', 'version', 'description', 'name'],
+        }),
+      ],
+    });
+
+    expect(output.toJSON()).toEqual({
+      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.tagOrderHeaders),
+      '/dist/output.meta.js': Fixtures.tagOrderHeaders,
+    });
+  });
 });
