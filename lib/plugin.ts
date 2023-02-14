@@ -314,8 +314,7 @@ export class UserscriptPlugin {
     data: CompilerData,
     fileInfo: FileInfo,
   ): Promise<void> {
-    const { prefix, pretty, suffix, whitelist, strict, proxyScript, metajs } =
-      this.options;
+    const { whitelist, strict, proxyScript, metajs } = this.options;
 
     const { headers: headersProps, ssriLock } =
       await this.hooks.processHeaders.promise({
@@ -370,16 +369,8 @@ export class UserscriptPlugin {
     }
 
     const { originalFile, chunk, metajsFile, userjsFile } = fileInfo;
-    const headersStr = headers.render({
-      prefix,
-      pretty,
-      suffix,
-    });
-    const proxyHeadersStr = proxyHeaders?.render({
-      prefix,
-      pretty,
-      suffix,
-    });
+    const headersStr = headers.render(this.options);
+    const proxyHeadersStr = proxyHeaders?.render(this.options);
     const sourceAsset = compilation.getAsset(originalFile);
     if (!sourceAsset) {
       return;
