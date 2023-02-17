@@ -1,7 +1,7 @@
 import path from 'node:path';
 
-import { AsyncSeriesWaterfallHook } from 'tapable';
-import { Compilation, Compiler, sources } from 'webpack';
+import { AsyncParallelHook, AsyncSeriesWaterfallHook } from 'tapable';
+import { Compilation, Compiler, sources, WebpackPluginInstance } from 'webpack';
 
 import {
   findPackage,
@@ -34,7 +34,7 @@ import { interpolate } from './util';
 
 const { ConcatSource, RawSource } = sources;
 
-export class UserscriptPlugin {
+export class UserscriptPlugin2 {
   public readonly hooks = {
     processHeaders: new AsyncSeriesWaterfallHook<HeadersWaterfall>(['headers']),
     processProxyHeaders: new AsyncSeriesWaterfallHook<HeadersWaterfall>([
@@ -435,6 +435,62 @@ export class UserscriptPlugin {
       data.lockDirty = false;
     }
   }
+}
+
+export interface PluginContext {
+  buildNo: number;
+  buildTime: Date;
+}
+
+export class UserscriptPlugin implements WebpackPluginInstance {
+  public static readonly pluginName = 'UserscriptPlugin';
+
+  private context?: PluginContext;
+  private readonly hooks = {
+    prepare: new AsyncParallelHook<PluginContext>(),
+  };
+
+  public apply(compiler: Compiler): void {
+    const name = UserscriptPlugin.pluginName;
+    const initPromise = this.init();
+
+    compiler.hooks.beforeCompile.tapPromise(name, () => initPromise);
+
+    compiler.hooks.compilation.tap(name, (compilation) => {
+      compilation.hooks.processAssets.tapPromise(
+        {
+          name,
+          stage: Compilation.PROCESS_ASSETS_STAGE_PRE_PROCESS,
+        },
+        () => this.prepare(),
+      );
+
+      compilation.hooks.processAssets.tapPromise(
+        {
+          name,
+          // we should generate userscript files
+          // only if optimization of source files are complete
+          stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
+        },
+        () => this.process(),
+      );
+    });
+
+    compiler.hooks.done.tapPromise(name, () => this.close());
+  }
+
+  private async init(): Promise<void> {}
+
+  private async close(): Promise<void> {}
+
+  private async prepare(): Promise<void> {
+    this.context = {
+      buildNo: (this.context?.buildNo ?? 0) + 1,
+      buildTime: new Date(),
+    };
+  }
+
+  private async process(): Promise<void> {}
 }
 
 interface PackageJson {
