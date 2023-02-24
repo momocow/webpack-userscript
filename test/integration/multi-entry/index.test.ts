@@ -18,12 +18,14 @@ describe('multi-entry', () => {
 
   it('should call headers provider against each entry', async () => {
     const headersProvider = jest.fn().mockImplementation(
-      ({
+      (
         headers,
-        fileInfo: {
-          chunk: { name },
+        {
+          fileInfo: {
+            chunk: { name },
+          },
         },
-      }) => ({ ...headers, name }),
+      ) => ({ ...headers, name }),
     );
 
     const output = await compile(input, {

@@ -47,18 +47,22 @@ describe('ssri', () => {
               'legacy-badge': `http://localhost:${server.port}/travis-webpack-userscript.svg`,
             },
           },
-          ssri: true,
+          ssri: {},
         }),
       ],
     });
 
-    expect(output.toJSON()).toEqual({
-      '/dist/output.user.js': Fixtures.entryUserJs(
-        Fixtures.ssriHeaders(tplData),
-      ),
-      '/dist/output.meta.js': Fixtures.ssriHeaders(tplData),
-      '/home/ssri-lock.json': Fixtures.ssriLockJson(tplData),
-    });
+    expect(
+      output.readFileSync('/dist/output.user.js').toString('utf-8'),
+    ).toEqual(Fixtures.entryUserJs(Fixtures.ssriHeaders(tplData)));
+
+    expect(
+      output.readFileSync('/dist/output.meta.js').toString('utf-8'),
+    ).toEqual(Fixtures.ssriHeaders(tplData));
+
+    expect(
+      JSON.parse(output.readFileSync('/home/ssri-lock.json').toString('utf-8')),
+    ).toEqual(JSON.parse(Fixtures.ssriLockJson(tplData)));
   });
 
   it('should generate SSRIs and ssri-lock.json under the root', async () => {
@@ -75,7 +79,7 @@ describe('ssri', () => {
             },
           },
           root: '/data',
-          ssri: true,
+          ssri: {},
         }),
       ],
     });
@@ -198,7 +202,7 @@ describe('ssri', () => {
                 'legacy-badge': `http://localhost:${server.port}/travis-webpack-userscript.svg`,
               },
             },
-            ssri: true,
+            ssri: {},
           }),
         ],
       },
@@ -241,7 +245,7 @@ describe('ssri', () => {
                 `Qiic7xUbs+urnF8cdAi2ApfQlgYTb5ZQTkTQaZEHCApnQ==`,
             },
           },
-          ssri: true,
+          ssri: {},
         }),
       ],
     });
@@ -253,8 +257,7 @@ describe('ssri', () => {
         Fixtures.ssriHeaders(tplData),
       ),
       '/dist/output.meta.js': Fixtures.ssriHeaders(tplData),
-      // there is no ssri-lock.json in output FS
-      // since ssri-lock remains unchanged (no write happened)
+      '/data/ssri-lock.json': Fixtures.ssriLockJson(tplData),
     });
   });
 
@@ -290,7 +293,7 @@ describe('ssri', () => {
                   `T6Nk2BIJldOPdak+YLXr0+Wwa9eENhHuDlKNKgsOYug==`,
               },
             },
-            ssri: true,
+            ssri: {},
           }),
         ],
       });

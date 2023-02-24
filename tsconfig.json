@@ -21,7 +21,7 @@
     "sourceMap": true,
     "outDir": "./dist/",
     "types": ["node", "jest"],
-    "lib": ["ES6", "DOM"],
+    "lib": ["ESNext"],
     "emitDecoratorMetadata": true,
     "paths": {
       "webpack-userscript": ["lib"]

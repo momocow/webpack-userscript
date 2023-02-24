@@ -1,7 +1,9 @@
-import { StrictHeadersProps } from '../headers';
-import { InternalPlugin, UserscriptHooks } from '../hook';
+import { StrictHeadersProps, UserscriptPluginInstance } from '../types';
+import { Feature } from './feature';
 
-export class FixTags extends InternalPlugin {
+export class FixTags extends Feature {
+  public readonly name = 'FixTags';
+
   public readonly fixableTagNames = new Map<string, keyof StrictHeadersProps>([
     ['updateUrl', 'updateURL'],
     ['iconUrl', 'iconURL'],
@@ -12,8 +14,8 @@ export class FixTags extends InternalPlugin {
     ['homepageUrl', 'homepageURL'],
   ]);
 
-  public apply({ hooks }: UserscriptHooks): void {
-    hooks.headers.tap(this.constructor.name, (headers) => {
+  public apply({ hooks }: UserscriptPluginInstance): void {
+    hooks.headers.tap(this.name, (headers) => {
       for (const [source, target] of this.fixableTagNames) {
         if (headers[source] !== undefined) {
           if (headers[target] !== undefined) {

@@ -71,7 +71,7 @@ describe('load-headers', () => {
         ...Fixtures.webpackConfig,
         plugins: [
           new UserscriptPlugin({
-            headers: ({ headers }): HeadersProps => ({
+            headers: (headers): HeadersProps => ({
               ...headers,
               name: 'load-headers',
             }),
@@ -92,7 +92,7 @@ describe('load-headers', () => {
         ...Fixtures.webpackConfig,
         plugins: [
           new UserscriptPlugin({
-            headers: async ({ headers }): Promise<HeadersProps> => ({
+            headers: async (headers): Promise<HeadersProps> => ({
               ...headers,
               name: 'load-headers',
             }),

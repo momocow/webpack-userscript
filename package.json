@@ -72,6 +72,7 @@
   "dependencies": {
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "immutable": "^4.2.4",
     "node-fetch": "^2.6.9",
     "p-limit": "^3.1.0",
     "reflect-metadata": "^0.1.13",
