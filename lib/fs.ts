@@ -65,6 +65,7 @@ export async function readJSON<T>(
 ): Promise<T> {
   const readFileAsync = promisify(fs.readFile);
   const buf = await readFileAsync(file);
+
   return JSON.parse(buf.toString('utf-8'));
 }
 
@@ -82,5 +83,6 @@ export async function mkdirp(
   fs: FsMkdir = _fs,
 ): Promise<string | undefined> {
   const mkdirAsync = promisify(fs.mkdir);
+
   return await mkdirAsync(dir);
 }
