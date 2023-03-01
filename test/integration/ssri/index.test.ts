@@ -3,7 +3,7 @@ import path from 'node:path';
 import fetch from 'node-fetch';
 import { UserscriptPlugin } from 'webpack-userscript';
 
-import { compile, servceStatic, ServeStatic } from '../util';
+import { compile, readJSON, servceStatic, ServeStatic } from '../util';
 import { createFsFromVolume, Volume } from '../volume';
 import { Fixtures } from './fixtures';
 
@@ -52,17 +52,18 @@ describe('ssri', () => {
       ],
     });
 
-    expect(
-      output.readFileSync('/dist/output.user.js').toString('utf-8'),
-    ).toEqual(Fixtures.entryUserJs(Fixtures.ssriHeaders(tplData)));
+    expect(output.toJSON()).toEqual(
+      expect.objectContaining({
+        '/dist/output.user.js': Fixtures.entryUserJs(
+          Fixtures.ssriHeaders(tplData),
+        ),
+        '/dist/output.meta.js': Fixtures.ssriHeaders(tplData),
+      }),
+    );
 
-    expect(
-      output.readFileSync('/dist/output.meta.js').toString('utf-8'),
-    ).toEqual(Fixtures.ssriHeaders(tplData));
-
-    expect(
-      JSON.parse(output.readFileSync('/home/ssri-lock.json').toString('utf-8')),
-    ).toEqual(JSON.parse(Fixtures.ssriLockJson(tplData)));
+    expect(readJSON(output, '/home/ssri-lock.json')).toEqual(
+      JSON.parse(Fixtures.ssriLockJson(tplData)),
+    );
   });
 
   it('should generate SSRIs and ssri-lock.json under the root', async () => {
@@ -84,13 +85,18 @@ describe('ssri', () => {
       ],
     });
 
-    expect(output.toJSON()).toEqual({
-      '/dist/output.user.js': Fixtures.entryUserJs(
-        Fixtures.ssriHeaders(tplData),
-      ),
-      '/dist/output.meta.js': Fixtures.ssriHeaders(tplData),
-      '/data/ssri-lock.json': Fixtures.ssriLockJson(tplData),
-    });
+    expect(output.toJSON()).toEqual(
+      expect.objectContaining({
+        '/dist/output.user.js': Fixtures.entryUserJs(
+          Fixtures.ssriHeaders(tplData),
+        ),
+        '/dist/output.meta.js': Fixtures.ssriHeaders(tplData),
+      }),
+    );
+
+    expect(readJSON(output, '/data/ssri-lock.json')).toEqual(
+      JSON.parse(Fixtures.ssriLockJson(tplData)),
+    );
   });
 
   it('should apply url filters to determine SSRI target urls', async () => {
@@ -145,13 +151,18 @@ describe('ssri', () => {
       ],
     });
 
-    expect(output.toJSON()).toEqual({
-      '/dist/output.user.js': Fixtures.entryUserJs(
-        Fixtures.algorithmsSSRIHeaders(tplData),
-      ),
-      '/dist/output.meta.js': Fixtures.algorithmsSSRIHeaders(tplData),
-      '/ssri-lock.json': Fixtures.algorithmsSSRILockJson(tplData),
-    });
+    expect(output.toJSON()).toEqual(
+      expect.objectContaining({
+        '/dist/output.user.js': Fixtures.entryUserJs(
+          Fixtures.algorithmsSSRIHeaders(tplData),
+        ),
+        '/dist/output.meta.js': Fixtures.algorithmsSSRIHeaders(tplData),
+      }),
+    );
+
+    expect(readJSON(output, '/ssri-lock.json')).toEqual(
+      JSON.parse(Fixtures.algorithmsSSRILockJson(tplData)),
+    );
   });
 
   it('should generate SSRIs without ssri-lock.json', async () => {
@@ -252,13 +263,18 @@ describe('ssri', () => {
 
     expect(fetch).not.toBeCalled();
 
-    expect(output.toJSON()).toEqual({
-      '/dist/output.user.js': Fixtures.entryUserJs(
-        Fixtures.ssriHeaders(tplData),
-      ),
-      '/dist/output.meta.js': Fixtures.ssriHeaders(tplData),
-      '/data/ssri-lock.json': Fixtures.ssriLockJson(tplData),
-    });
+    expect(output.toJSON()).toEqual(
+      expect.objectContaining({
+        '/dist/output.user.js': Fixtures.entryUserJs(
+          Fixtures.ssriHeaders(tplData),
+        ),
+        '/dist/output.meta.js': Fixtures.ssriHeaders(tplData),
+      }),
+    );
+
+    expect(readJSON(output, '/data/ssri-lock.json')).toEqual(
+      JSON.parse(Fixtures.ssriLockJson(tplData)),
+    );
   });
 
   it(

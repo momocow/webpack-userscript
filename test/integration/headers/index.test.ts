@@ -14,8 +14,8 @@ describe('headers', () => {
     });
   });
 
-  describe('non strict mode', () => {
-    it('should allow custom tags', async () => {
+  describe('strict', () => {
+    it('should allow custom tags in non strict mode', async () => {
       const customTags = findTags.bind(
         undefined,
         'custom',
@@ -45,42 +45,46 @@ describe('headers', () => {
     });
   });
 
-  it('should be rendered prettily', async () => {
-    const output = await compile(input, {
-      ...Fixtures.webpackConfig,
-      plugins: [
-        new UserscriptPlugin({
-          headers: {
-            resource: {
-              test: 'http://example.com/demo.jpg',
+  describe('pretty', () => {
+    it('should be rendered prettily', async () => {
+      const output = await compile(input, {
+        ...Fixtures.webpackConfig,
+        plugins: [
+          new UserscriptPlugin({
+            headers: {
+              resource: {
+                test: 'http://example.com/demo.jpg',
+              },
             },
-          },
-          pretty: true,
-        }),
-      ],
-    });
+            pretty: true,
+          }),
+        ],
+      });
 
-    expect(output.toJSON()).toEqual({
-      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.prettyHeaders),
-      '/dist/output.meta.js': Fixtures.prettyHeaders,
+      expect(output.toJSON()).toEqual({
+        '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.prettyHeaders),
+        '/dist/output.meta.js': Fixtures.prettyHeaders,
+      });
     });
   });
 
-  it('should respect the specified tag order', async () => {
-    const output = await compile(input, {
-      ...Fixtures.webpackConfig,
-      plugins: [
-        new UserscriptPlugin({
-          // though "@include" tag does not present in the headers,
-          // it is fine to be in the tagOrder list
-          tagOrder: ['include', 'match', 'version', 'description', 'name'],
-        }),
-      ],
-    });
+  describe('tagOrder', () => {
+    it('should respect the specified tag order', async () => {
+      const output = await compile(input, {
+        ...Fixtures.webpackConfig,
+        plugins: [
+          new UserscriptPlugin({
+            // though "@include" tag does not present in the headers,
+            // it is fine to be in the tagOrder list
+            tagOrder: ['include', 'match', 'version', 'description', 'name'],
+          }),
+        ],
+      });
 
-    expect(output.toJSON()).toEqual({
-      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.tagOrderHeaders),
-      '/dist/output.meta.js': Fixtures.tagOrderHeaders,
+      expect(output.toJSON()).toEqual({
+        '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.tagOrderHeaders),
+        '/dist/output.meta.js': Fixtures.tagOrderHeaders,
+      });
     });
   });
 });

@@ -41,6 +41,7 @@ export async function compile(
     if (details.warningsCount) {
       console.error(details.warnings);
     }
+
     throw new Error('invalid fixtures');
   }
 
@@ -92,4 +93,8 @@ export function template<T extends Record<string, string>>(
       (matched, matchedKey) => data[matchedKey] ?? matched,
     );
   };
+}
+
+export function readJSON(vol: Volume, file: string): unknown {
+  return JSON.parse(vol.readFileSync(file).toString('utf-8'));
 }
