@@ -55,7 +55,11 @@ export class RenderHeaders extends Feature<RenderHeadersOptions> {
       .sort(
         ([tag1], [tag2]) =>
           (orderRevMap.get(tag1) ?? orderRevMap.size) -
-          (orderRevMap.get(tag2) ?? orderRevMap.size),
+            (orderRevMap.get(tag2) ?? orderRevMap.size) ||
+          // the above expression evaluates 0
+          // only if both tags are out of orderRevMap
+          // if so, use ascending ascii order
+          (tag1 > tag2 ? 1 : tag1 < tag2 ? -1 : 0),
       )
       .flatMap(([tag, value]) => this.renderTag(tag, value));
     const body = pretty

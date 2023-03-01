@@ -239,7 +239,7 @@ export class UserscriptPlugin
     const headersStr = await this.hooks.renderHeaders.promise(headers);
 
     const proxyHeaders = proxyScript
-      ? await this.hooks.proxyHeaders.promise({}, waterfall)
+      ? await this.hooks.proxyHeaders.promise(headers, waterfall)
       : undefined;
     const proxyScriptFile = proxyScript
       ? await this.hooks.proxyScriptFile.promise('', waterfall)
@@ -259,13 +259,9 @@ export class UserscriptPlugin
     chunk.files.add(userjsFile);
 
     if (metajs !== false) {
-      compilation.emitAsset(
-        metajsFile,
-        new RawSource(proxyHeadersStr ?? headersStr),
-        {
-          minimized: true,
-        },
-      );
+      compilation.emitAsset(metajsFile, new RawSource(headersStr), {
+        minimized: true,
+      });
       chunk.auxiliaryFiles.add(metajsFile);
     }
 

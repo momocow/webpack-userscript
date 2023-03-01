@@ -5,7 +5,7 @@ import { Feature } from './feature';
 
 export interface ProxyScriptFeatureOptions {
   filename?: string;
-  baseUrl?: string;
+  baseURL?: string;
 }
 
 export interface ProxyScriptOptions {
@@ -22,9 +22,9 @@ export class ProcessProxyScript extends Feature<ProxyScriptOptions> {
       hooks.proxyHeaders.tap(
         this.name,
         (headers, { fileInfo: { userjsFile } }) => {
-          const devBaseUrl = !proxyScript.baseUrl
+          const devBaseUrl = !proxyScript.baseURL
             ? 'http://localhost:8080/'
-            : proxyScript.baseUrl;
+            : proxyScript.baseURL;
 
           const requireTags = Array.isArray(headers.require)
             ? headers.require
