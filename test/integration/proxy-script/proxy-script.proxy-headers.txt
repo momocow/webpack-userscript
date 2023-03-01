@@ -1,0 +1,8 @@
+// ==UserScript==
+// @name userscript
+// @description this is a fantastic userscript
+// @version 0.0.0
+// @match *://*/*
+// @require http://require.example.com
+// @require http://localhost:8080/output.user.js
+// ==/UserScript==

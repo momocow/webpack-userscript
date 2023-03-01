@@ -57,4 +57,35 @@ describe('multi-entry', () => {
       '/dist/entry3.meta.js': Fixtures.entry3Headers,
     });
   });
+
+  it('should interpolate headers against each entry', async () => {
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      entry: {
+        entry1: '/entry1.js',
+        entry2: '/entry2.js',
+        entry3: '/entry3.js',
+      },
+      output: {
+        path: '/dist',
+        filename: '[name].js',
+      },
+      plugins: [
+        new UserscriptPlugin({
+          headers: {
+            name: '[name]',
+          },
+        }),
+      ],
+    });
+
+    expect(output.toJSON()).toEqual({
+      '/dist/entry1.user.js': Fixtures.entryUserJs(Fixtures.entry1Headers),
+      '/dist/entry1.meta.js': Fixtures.entry1Headers,
+      '/dist/entry2.user.js': Fixtures.entryUserJs(Fixtures.entry2Headers),
+      '/dist/entry2.meta.js': Fixtures.entry2Headers,
+      '/dist/entry3.user.js': Fixtures.entryUserJs(Fixtures.entry3Headers),
+      '/dist/entry3.meta.js': Fixtures.entry3Headers,
+    });
+  });
 });

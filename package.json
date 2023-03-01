@@ -25,7 +25,8 @@
   ],
   "scripts": {
     "lint": "eslint lib/ --ext .js,.jsx,.ts,.tsx",
-    "test": "jest",
+    "test": "jest --coverage --collectCoverageFrom \"lib/**/*.ts\"",
+    "test:dev": "jest",
     "clean": "shx rm -rf dist build package",
     "ts-node": "ts-node",
     "docs": "typedoc",
