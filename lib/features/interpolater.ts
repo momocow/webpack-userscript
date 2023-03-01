@@ -26,6 +26,7 @@ export class Interpolater extends Feature {
   private getVariables({
     fileInfo: { chunk, originalFile, filename, basename, query, dirname },
     buildNo,
+    buildTime,
   }: WaterfallContext): Record<string, string> {
     return {
       name: chunk.name,
@@ -35,7 +36,7 @@ export class Interpolater extends Feature {
       query,
       dirname,
       buildNo: buildNo.toString(),
-      buildTime: Date.now().toString(),
+      buildTime: buildTime.toISOString(),
     };
   }
 

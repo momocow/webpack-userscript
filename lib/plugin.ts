@@ -19,6 +19,7 @@ import {
   SetDefaultTags,
   ValidateHeaders,
 } from './features';
+import { Date } from './global';
 import {
   CompilationContext,
   FileInfo,
