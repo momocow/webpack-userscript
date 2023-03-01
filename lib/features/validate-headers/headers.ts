@@ -111,22 +111,22 @@ export class Headers implements StrictHeadersProps {
 
   @Expose()
   @IsOptional()
-  @IsString()
+  @IsString({ each: true })
   public readonly include?: MultiValue;
 
   @Expose()
   @IsOptional()
-  @IsString()
+  @IsString({ each: true })
   public readonly match?: MultiValue;
 
   @Expose()
   @IsOptional()
-  @IsString()
+  @IsString({ each: true })
   public readonly exclude?: MultiValue;
 
   @Expose()
   @IsOptional()
-  @IsString()
+  @IsString({ each: true })
   public readonly require?: MultiValue;
 
   @Expose()
@@ -136,17 +136,17 @@ export class Headers implements StrictHeadersProps {
 
   @Expose()
   @IsOptional()
-  @IsString()
+  @IsString({ each: true })
   public readonly connect?: MultiValue;
 
   @Expose()
   @IsOptional()
-  @IsString()
+  @IsString({ each: true })
   public readonly grant?: MultiValue;
 
   @Expose()
   @IsOptional()
-  @IsString()
+  @IsString({ each: true })
   public readonly webRequest?: MultiValue;
 
   @Expose()
@@ -168,8 +168,4 @@ export class Headers implements StrictHeadersProps {
   @IsOptional()
   @IsEnum(RunAtValue)
   public readonly ['run-at']?: RunAtValue;
-
-  // public toJSON(): HeadersProps {
-  //   return instanceToPlain(this, { exposeUnsetFields: false });
-  // }
 }
