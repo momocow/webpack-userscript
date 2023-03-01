@@ -79,12 +79,14 @@ export class UserscriptPlugin
 
   private readonly contexts = new WeakMap<Compilation, CompilationContext>();
 
-  public constructor(
-    public options: UserscriptOptions = {
-      metajs: true,
-      strict: true,
-    },
-  ) {}
+  public constructor(public options: UserscriptOptions = {}) {
+    const { metajs = true, strict = true } = this.options;
+
+    Object.assign(this.options, {
+      metajs,
+      strict,
+    });
+  }
 
   public apply(compiler: Compiler): void {
     const name = this.name;

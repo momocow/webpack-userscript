@@ -1,4 +1,4 @@
-import { UserscriptPlugin } from 'webpack-userscript';
+import { UserscriptOptions, UserscriptPlugin } from 'webpack-userscript';
 
 import { compile, findTags } from '../util';
 import { Volume } from '../volume';
@@ -14,35 +14,77 @@ describe('headers', () => {
     });
   });
 
-  describe('strict', () => {
-    it('should allow custom tags in non strict mode', async () => {
-      const customTags = findTags.bind(
-        undefined,
-        'custom',
-        Fixtures.customValue,
-      );
+  describe('strict & whitelist', () => {
+    const testCustomTags =
+      (
+        count: number,
+        {
+          strict,
+          whitelist,
+        }: Pick<UserscriptOptions, 'strict' | 'whitelist'> = {},
+      ) =>
+      async (): Promise<void> => {
+        const customTags = findTags.bind(
+          undefined,
+          'custom',
+          Fixtures.customValue,
+        );
 
-      const output = await compile(input, {
-        ...Fixtures.webpackConfig,
-        plugins: [
-          new UserscriptPlugin({
-            headers: {
-              custom: Fixtures.customValue,
-            },
-          }),
-        ],
-      });
+        const output = await compile(input, {
+          ...Fixtures.webpackConfig,
+          plugins: [
+            new UserscriptPlugin({
+              headers: {
+                custom: Fixtures.customValue,
+              },
+              strict,
+              whitelist,
+            }),
+          ],
+        });
 
-      const userJs = output
-        .readFileSync('/dist/output.user.js')
-        .toString('utf-8');
-      const metaJs = output
-        .readFileSync('/dist/output.meta.js')
-        .toString('utf-8');
+        const userJs = output
+          .readFileSync('/dist/output.user.js')
+          .toString('utf-8');
+        const metaJs = output
+          .readFileSync('/dist/output.meta.js')
+          .toString('utf-8');
 
-      expect(customTags(userJs)).toHaveLength(1);
-      expect(customTags(metaJs)).toHaveLength(1);
-    });
+        expect(customTags(userJs)).toHaveLength(count);
+        expect(customTags(metaJs)).toHaveLength(count);
+      };
+
+    it('should throw for custom tags in strict but non-whitelist mode', () =>
+      expect(
+        testCustomTags(0, {
+          strict: true,
+          whitelist: false,
+        })(),
+      ).toReject());
+
+    it(
+      'should render custom tags in non-strict and non-whitelist mode',
+      testCustomTags(1, {
+        strict: false,
+        whitelist: false,
+      }),
+    );
+
+    it(
+      'should not render custom tags in non-strict but whitelist mode',
+      testCustomTags(0, {
+        strict: false,
+        whitelist: true,
+      }),
+    );
+
+    it(
+      'should not render custom tags in strict and whitelist mode',
+      testCustomTags(0, {
+        strict: true,
+        whitelist: true,
+      }),
+    );
   });
 
   describe('pretty', () => {
