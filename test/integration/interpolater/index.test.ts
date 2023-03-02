@@ -4,9 +4,12 @@ import { compile, findTags } from '../util';
 import { Volume } from '../volume';
 import { Fixtures } from './fixtures';
 
+jest.mock('webpack-userscript/utils', () => ({
+  date: (): Date => new Date(0),
+}));
+
 describe('interpolater', () => {
   let input: Volume;
-  const now = new Date(0);
 
   beforeEach(async () => {
     input = Volume.fromJSON({
@@ -16,18 +19,21 @@ describe('interpolater', () => {
   });
 
   for (const [name, expectedName] of [
-    ['[name]', ''],
-    ['[file]', ''],
-    ['[filename]', ''],
-    ['[basename]', ''],
+    ['[name]', 'customEntry'],
+    ['[file]', 'output.js'],
+    ['[filename]', 'output.js'],
+    ['[basename]', 'output'],
     ['[query]', ''],
-    ['[dirname]', ''],
-    ['[buildNo]', ''],
-    ['[buildTime]', ''],
+    ['[dirname]', '.'],
+    ['[buildNo]', '1'],
+    ['[buildTime]', '1970-01-01T00:00:00.000Z'],
   ]) {
     it(name, async () => {
       const output = await compile(input, {
         ...Fixtures.webpackConfig,
+        entry: {
+          customEntry: '/entry.js',
+        },
         plugins: [
           new UserscriptPlugin({
             headers: {

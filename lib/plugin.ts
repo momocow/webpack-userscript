@@ -19,7 +19,6 @@ import {
   SetDefaultTags,
   ValidateHeaders,
 } from './features';
-import { Date } from './global';
 import {
   CompilationContext,
   FileInfo,
@@ -28,6 +27,7 @@ import {
   UserscriptPluginInstance,
   WaterfallContext,
 } from './types';
+import { date } from './utils';
 
 const { ConcatSource, RawSource } = sources;
 
@@ -102,7 +102,7 @@ export class UserscriptPlugin
     compiler.hooks.compilation.tap(name, (compilation) => {
       this.contexts.set(compilation, {
         buildNo: ++buildNo,
-        buildTime: new Date(),
+        buildTime: date(),
         fileInfo: [],
       });
 
@@ -159,15 +159,13 @@ export class UserscriptPlugin
       return;
     }
 
-    const fileInfoList = this.collectFileInfo(compilation);
-
     await Promise.all(
-      fileInfoList.map((fileInfo) =>
+      context.fileInfo.map((fileInfo) =>
         this.emitUserscript(compilation, context, fileInfo),
       ),
     );
 
-    for (const { originalFile } of fileInfoList) {
+    for (const { originalFile } of context.fileInfo) {
       compilation.deleteAsset(originalFile);
     }
 

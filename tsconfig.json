@@ -24,7 +24,8 @@
     "lib": ["ESNext"],
     "emitDecoratorMetadata": true,
     "paths": {
-      "webpack-userscript": ["lib"]
+      "webpack-userscript": ["lib"],
+      "webpack-userscript/*": ["lib/*"]
     }
   },
   "include": ["**/*.ts"]
