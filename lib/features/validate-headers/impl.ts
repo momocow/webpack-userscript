@@ -10,7 +10,7 @@ export interface HeadersValidatorOptions {
   whitelist?: boolean;
 }
 
-export type HeaderClass = { new (): Headers };
+export type HeaderClass = { new (): object };
 
 export interface ValidateHeadersOptions extends HeadersValidatorOptions {
   proxyScript?: unknown;
