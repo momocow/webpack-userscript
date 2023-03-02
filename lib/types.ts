@@ -112,6 +112,7 @@ export interface UserscriptPluginInstance {
 
 export interface UserscriptPluginOptions {
   metajs?: boolean;
+  skip?: (fileInfo: FileInfo) => boolean;
 }
 
 export type UserscriptOptions = LoadHeadersOptions &

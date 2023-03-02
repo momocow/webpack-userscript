@@ -143,6 +143,7 @@ export class UserscriptPlugin
   private async preprocess(compilation: Compilation): Promise<void> {
     const context = this.contexts.get(compilation);
 
+    /* istanbul ignore next */
     if (!context) {
       return;
     }
@@ -155,6 +156,7 @@ export class UserscriptPlugin
   private async process(compilation: Compilation): Promise<void> {
     const context = this.contexts.get(compilation);
 
+    /* istanbul ignore next */
     if (!context) {
       return;
     }
@@ -186,10 +188,6 @@ export class UserscriptPlugin
         const query = originalFile.slice(q);
         const extname = path.extname(filename);
 
-        if (extname !== '.js') {
-          continue;
-        }
-
         const dirname = path.dirname(filename);
         const basename = filename.endsWith('.user.js')
           ? path.basename(filename, '.user.js')
@@ -200,7 +198,7 @@ export class UserscriptPlugin
         const userjsFile = path.join(dirname, basename + '.user.js') + query;
         const metajsFile = path.join(dirname, basename + '.meta.js');
 
-        fileInfo.push({
+        const fileInfoEntry = {
           chunk,
           originalFile,
           userjsFile,
@@ -209,7 +207,13 @@ export class UserscriptPlugin
           dirname,
           basename,
           query,
-        });
+        };
+
+        if (this.options.skip?.(fileInfoEntry) ?? extname !== '.js') {
+          continue;
+        }
+
+        fileInfo.push(fileInfoEntry);
       }
     }
 
@@ -231,6 +235,7 @@ export class UserscriptPlugin
     };
 
     if (!sourceAsset) {
+      /* istanbul ignore next */
       return;
     }
 

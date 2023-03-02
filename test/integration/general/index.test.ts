@@ -4,7 +4,7 @@ import { compile } from '../util';
 import { Volume } from '../volume';
 import { Fixtures } from './fixtures';
 
-describe('quickstart', () => {
+describe('general', () => {
   let input: Volume;
 
   beforeEach(async () => {
@@ -23,6 +23,21 @@ describe('quickstart', () => {
     expect(output.toJSON()).toEqual({
       '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.headers),
       '/dist/output.meta.js': Fixtures.headers,
+    });
+  });
+
+  it('should skip files based on the skip option', async () => {
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      plugins: [
+        new UserscriptPlugin({
+          skip: (): boolean => true,
+        }),
+      ],
+    });
+
+    expect(output.toJSON()).toEqual({
+      '/dist/output.js': Fixtures.entryMinJs,
     });
   });
 });
