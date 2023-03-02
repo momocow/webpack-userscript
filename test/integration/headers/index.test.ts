@@ -14,7 +14,7 @@ describe('headers', () => {
     });
   });
 
-  describe('strict & whitelist', () => {
+  describe('validate-headers', () => {
     const testCustomTags =
       (
         count: number,
@@ -87,7 +87,7 @@ describe('headers', () => {
     );
   });
 
-  describe('pretty', () => {
+  describe('render-headers', () => {
     it('should be rendered prettily', async () => {
       const output = await compile(input, {
         ...Fixtures.webpackConfig,
@@ -108,9 +108,7 @@ describe('headers', () => {
         '/dist/output.meta.js': Fixtures.prettyHeaders,
       });
     });
-  });
 
-  describe('tagOrder', () => {
     it('should respect the specified tag order', async () => {
       const output = await compile(input, {
         ...Fixtures.webpackConfig,
