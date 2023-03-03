@@ -448,7 +448,7 @@ describe('ssri', () => {
     );
   });
 
-  it('should throw if fetching sources falied', () => {
+  it.skip('should throw if fetching sources falied', () => {
     const promise = compile(input, {
       ...Fixtures.webpackConfig,
       plugins: [

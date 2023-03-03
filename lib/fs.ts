@@ -108,11 +108,11 @@ export async function mkdirp(
 
   // const queue = [];
 
-  while (true) {
-    try {
-      await statAsync(dir);
-    } catch {
-      dir = path.dirname(dir);
-    }
-  }
+  // while (true) {
+  //   try {
+  //     await statAsync(dir);
+  //   } catch {
+  //     dir = path.dirname(dir);
+  //   }
+  // }
 }
