@@ -23,14 +23,14 @@ export class ResolveBaseURLs extends Feature<ResolveBaseURLsOptions> {
       this.name,
       (headers, { fileInfo: { userjsFile, metajsFile } }) => {
         if (headers.downloadURL === undefined) {
-          return {
+          headers = {
             ...headers,
             downloadURL: new URL(userjsFile, downloadBaseURL).toString(),
           };
         }
 
         if (headers.updateURL === undefined) {
-          return {
+          headers = {
             ...headers,
             updateURL: metajs
               ? new URL(metajsFile, updateBaseURL).toString()

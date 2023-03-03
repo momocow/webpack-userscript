@@ -1,27 +1,18 @@
+import { URL } from 'node:url';
+
 import { UserscriptPlugin } from 'webpack-userscript';
 
 import { compile, findTags } from '../util';
 import { Volume } from '../volume';
 import { Fixtures } from './fixtures';
 
-describe('default match tag', () => {
+describe('resolve base urls', () => {
   let input: Volume;
 
-  const httpsMatchTags = findTags.bind(
+  const findDownloadURL = findTags.bind(
     undefined,
-    'match',
-    Fixtures.httpsMatchValue,
-  );
-  const httpsIncludeTags = findTags.bind(
-    undefined,
-    'include',
-    Fixtures.httpsIncludeValue,
-  );
-
-  const defaultMatchTags = findTags.bind(
-    undefined,
-    'match',
-    Fixtures.defaultMatchValue,
+    'downloadURL',
+    Fixtures.downloadURL,
   );
 
   beforeEach(async () => {
@@ -31,32 +22,19 @@ describe('default match tag', () => {
     });
   });
 
-  // eslint-disable-next-line max-len
-  it('should use default match if no include or match specified', async () => {
-    const output = await compile(input, {
-      ...Fixtures.webpackConfig,
-      plugins: [new UserscriptPlugin()],
-    });
+  it('should resolve downloadURL and updateURL', async () => {
+    const findUpdateURLByMetajs = findTags.bind(
+      undefined,
+      'updateURL',
+      Fixtures.updateURLByMetajs,
+    );
 
-    const userJs = output
-      .readFileSync('/dist/output.user.js')
-      .toString('utf-8');
-    const metaJs = output
-      .readFileSync('/dist/output.meta.js')
-      .toString('utf-8');
-
-    expect(defaultMatchTags(userJs)).toHaveLength(1);
-    expect(defaultMatchTags(metaJs)).toHaveLength(1);
-  });
-
-  it('should not use default match if include is provided', async () => {
     const output = await compile(input, {
       ...Fixtures.webpackConfig,
       plugins: [
         new UserscriptPlugin({
-          headers: {
-            include: Fixtures.httpsIncludeValue,
-          },
+          downloadBaseURL: new URL('http://download.example.com'),
+          updateBaseURL: 'http://update.example.com',
         }),
       ],
     });
@@ -68,21 +46,27 @@ describe('default match tag', () => {
       .readFileSync('/dist/output.meta.js')
       .toString('utf-8');
 
-    expect(defaultMatchTags(userJs)).toHaveLength(0);
-    expect(httpsIncludeTags(userJs)).toHaveLength(1);
+    expect(findDownloadURL(userJs)).toHaveLength(1);
+    expect(findDownloadURL(metaJs)).toHaveLength(1);
 
-    expect(defaultMatchTags(metaJs)).toHaveLength(0);
-    expect(httpsIncludeTags(metaJs)).toHaveLength(1);
+    expect(findUpdateURLByMetajs(userJs)).toHaveLength(1);
+    expect(findUpdateURLByMetajs(metaJs)).toHaveLength(1);
   });
 
-  it('should not use default match if match is provided', async () => {
+  it('should resolve updateURL by userjs', async () => {
+    const findUpdateURLByUserjs = findTags.bind(
+      undefined,
+      'updateURL',
+      Fixtures.updateURLByUserjs,
+    );
+
     const output = await compile(input, {
       ...Fixtures.webpackConfig,
       plugins: [
         new UserscriptPlugin({
-          headers: {
-            match: Fixtures.httpsMatchValue,
-          },
+          downloadBaseURL: new URL('http://download.example.com'),
+          updateBaseURL: 'http://update.example.com',
+          metajs: false,
         }),
       ],
     });
@@ -90,14 +74,33 @@ describe('default match tag', () => {
     const userJs = output
       .readFileSync('/dist/output.user.js')
       .toString('utf-8');
-    const metaJs = output
-      .readFileSync('/dist/output.meta.js')
+
+    expect(findDownloadURL(userJs)).toHaveLength(1);
+    expect(findUpdateURLByUserjs(userJs)).toHaveLength(1);
+  });
+
+  it('should resolve updateURL by downloadURL', async () => {
+    const findUpdateURLByDownloadURL = findTags.bind(
+      undefined,
+      'updateURL',
+      Fixtures.downloadURL,
+    );
+
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      plugins: [
+        new UserscriptPlugin({
+          downloadBaseURL: new URL('http://download.example.com'),
+          metajs: false,
+        }),
+      ],
+    });
+
+    const userJs = output
+      .readFileSync('/dist/output.user.js')
       .toString('utf-8');
 
-    expect(defaultMatchTags(userJs)).toHaveLength(0);
-    expect(httpsMatchTags(userJs)).toHaveLength(1);
-
-    expect(defaultMatchTags(metaJs)).toHaveLength(0);
-    expect(httpsMatchTags(metaJs)).toHaveLength(1);
+    expect(findDownloadURL(userJs)).toHaveLength(1);
+    expect(findUpdateURLByDownloadURL(userJs)).toHaveLength(1);
   });
 });

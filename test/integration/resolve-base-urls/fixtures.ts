@@ -1,9 +1,12 @@
 import { GlobalFixtures } from '../fixtures';
 
 export class Fixtures extends GlobalFixtures {
-  public static readonly defaultMatchValue = '*://*/*';
+  public static readonly downloadURL =
+    'http://download.example.com/output.user.js';
 
-  public static readonly httpsMatchValue = 'https://*/*';
+  public static readonly updateURLByMetajs =
+    'http://update.example.com/output.meta.js';
 
-  public static readonly httpsIncludeValue = 'https://*';
+  public static readonly updateURLByUserjs =
+    'http://update.example.com/output.user.js';
 }
