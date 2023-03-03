@@ -65,6 +65,28 @@ describe('load-headers', () => {
     await expect(promise).toReject();
   });
 
+  it('should compile if package.json does not exist', async () => {
+    input.rmSync('/package.json');
+
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      plugins: [
+        new UserscriptPlugin({
+          headers: {
+            name: 'userscript',
+            version: '0.0.0',
+            description: 'this is a fantastic userscript',
+          },
+        }),
+      ],
+    });
+
+    expect(output.toJSON()).toEqual({
+      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.headers),
+      '/dist/output.meta.js': Fixtures.headers,
+    });
+  });
+
   describe('headers provider', () => {
     it('can be loaded from headers provider function', async () => {
       const output = await compile(input, {
