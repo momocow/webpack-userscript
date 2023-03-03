@@ -121,6 +121,7 @@ describe('headers', () => {
               resource: {
                 test: 'http://example.com/demo.jpg',
               },
+              noframes: true,
             },
             pretty: true,
           }),

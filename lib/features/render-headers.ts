@@ -90,7 +90,7 @@ export class RenderHeaders extends Feature<RenderHeadersOptions> {
       return [[`// @${tag}`, value]];
     }
     if (value === true) {
-      return [[`// @${tag}`]];
+      return [[`// @${tag}`, '']];
     }
 
     return [];
