@@ -4,7 +4,7 @@ import { compile, findTags } from '../util';
 import { Volume } from '../volume';
 import { Fixtures } from './fixtures';
 
-describe('default match tag', () => {
+describe('default tags', () => {
   let input: Volume;
 
   const httpsMatchTags = findTags.bind(
