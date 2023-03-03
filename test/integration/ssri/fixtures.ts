@@ -52,4 +52,20 @@ export class Fixtures extends GlobalFixtures {
   public static get algorithmsSSRILockJson(): (data: any) => string {
     return template(this._algorithmsSSRILockJson);
   }
+
+  @File(__dirname, 'multi-algo-ssri-lock.json.txt')
+  private static readonly _multiAlgorithmsSSRILockJson: string;
+
+  @Memoize()
+  public static get multiAlgorithmsSSRILockJson(): (data: any) => string {
+    return template(this._multiAlgorithmsSSRILockJson);
+  }
+
+  @File(__dirname, 'unsupported-protocols.headers.txt')
+  public static readonly _unsupportedProtocolsHeaders: string;
+
+  @Memoize()
+  public static get unsupportedProtocolsHeaders(): (data: any) => string {
+    return template(this._unsupportedProtocolsHeaders);
+  }
 }

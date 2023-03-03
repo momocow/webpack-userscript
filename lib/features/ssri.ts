@@ -14,6 +14,7 @@ import { URL } from 'url';
 import {
   FsMkdir,
   FsReadFile,
+  FsStat,
   FsWriteFile,
   mkdirp,
   readJSON,
@@ -102,7 +103,7 @@ export class ProcessSSRI extends Feature<SSRIOptions> {
         const isNotRoot = path.dirname(dir) !== dir;
 
         if (isNotRoot) {
-          await mkdirp(dir, intermediateFileSystem as FsMkdir);
+          await mkdirp(dir, intermediateFileSystem as FsMkdir & FsStat);
         }
 
         await writeJSON(

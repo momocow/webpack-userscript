@@ -99,6 +99,40 @@ describe('ssri', () => {
     );
   });
 
+  it('should generate ssri-lock in custom lockfile', async () => {
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      context: '/home',
+      plugins: [
+        new UserscriptPlugin({
+          headers: {
+            require: `http://localhost:${server.port}/jquery-3.4.1.min.js`,
+            resource: {
+              // eslint-disable-next-line max-len
+              'legacy-badge': `http://localhost:${server.port}/travis-webpack-userscript.svg`,
+            },
+          },
+          ssri: {
+            lock: '/some/deep/dir/custom-lock.json',
+          },
+        }),
+      ],
+    });
+
+    expect(output.toJSON()).toEqual(
+      expect.objectContaining({
+        '/dist/output.user.js': Fixtures.entryUserJs(
+          Fixtures.ssriHeaders(tplData),
+        ),
+        '/dist/output.meta.js': Fixtures.ssriHeaders(tplData),
+      }),
+    );
+
+    expect(readJSON(output, '/some/deep/dir/custom-lock.json')).toEqual(
+      JSON.parse(Fixtures.ssriLockJson(tplData)),
+    );
+  });
+
   it('should apply url filters to determine SSRI target urls', async () => {
     const output = await compile(input, {
       ...Fixtures.webpackConfig,
@@ -123,13 +157,52 @@ describe('ssri', () => {
       ],
     });
 
-    expect(output.toJSON()).toEqual({
-      '/dist/output.user.js': Fixtures.entryUserJs(
-        Fixtures.filtersSSRIHeaders(tplData),
-      ),
-      '/dist/output.meta.js': Fixtures.filtersSSRIHeaders(tplData),
-      '/ssri-lock.json': Fixtures.filtersSSRILockJson(tplData),
+    expect(output.toJSON()).toEqual(
+      expect.objectContaining({
+        '/dist/output.user.js': Fixtures.entryUserJs(
+          Fixtures.filtersSSRIHeaders(tplData),
+        ),
+        '/dist/output.meta.js': Fixtures.filtersSSRIHeaders(tplData),
+      }),
+    );
+
+    expect(readJSON(output, '/ssri-lock.json')).toEqual(
+      JSON.parse(Fixtures.filtersSSRILockJson(tplData)),
+    );
+  });
+
+  it('should not generate SSRIs for unsupported protocols', async () => {
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      context: '/home',
+      plugins: [
+        new UserscriptPlugin({
+          headers: {
+            require: `http://localhost:${server.port}/jquery-3.4.1.min.js`,
+            resource: {
+              // eslint-disable-next-line max-len
+              'legacy-badge': `http://localhost:${server.port}/travis-webpack-userscript.svg`,
+              'unsupported-url': 'ftp://example.com',
+            },
+          },
+          root: '/data',
+          ssri: {},
+        }),
+      ],
     });
+
+    expect(output.toJSON()).toEqual(
+      expect.objectContaining({
+        '/dist/output.user.js': Fixtures.entryUserJs(
+          Fixtures.unsupportedProtocolsHeaders(tplData),
+        ),
+        '/dist/output.meta.js': Fixtures.unsupportedProtocolsHeaders(tplData),
+      }),
+    );
+
+    expect(readJSON(output, '/data/ssri-lock.json')).toEqual(
+      JSON.parse(Fixtures.ssriLockJson(tplData)),
+    );
   });
 
   it('should generate SSRIs based on provided algorithms', async () => {
@@ -318,4 +391,76 @@ describe('ssri', () => {
       await expect(promise).toReject();
     },
   );
+
+  it('should compile if no urls are found', async () => {
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      plugins: [
+        new UserscriptPlugin({
+          ssri: {},
+        }),
+      ],
+    });
+
+    expect(output.toJSON()).toEqual({
+      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.headers),
+      '/dist/output.meta.js': Fixtures.headers,
+    });
+  });
+
+  it('should generate SSRIs against missing algorithms', async () => {
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      context: '/data',
+      plugins: [
+        new UserscriptPlugin({
+          headers: {
+            require:
+              `http://localhost:${server.port}/jquery-3.4.1.min.js` +
+              `#sha512-udvAjJhK48f9RIIuwumiLLjPfaVfo5ddu9w/GP1+ene` +
+              `T6Nk2BIJldOPdak+YLXr0+Wwa9eENhHuDlKNKgsOYug==`,
+            resource: {
+              'legacy-badge':
+                `http://localhost:${server.port}` +
+                `/travis-webpack-userscript.svg` +
+                `#sha512-/xTO4jHEEl9gsQ2JvSjA9iMdzyiqapzDMfgtbLV34` +
+                `Qiic7xUbs+urnF8cdAi2ApfQlgYTb5ZQTkTQaZEHCApnQ==`,
+            },
+          },
+          ssri: {
+            algorithms: ['sha256'],
+          },
+        }),
+      ],
+    });
+
+    expect(output.toJSON()).toEqual(
+      expect.objectContaining({
+        '/dist/output.user.js': Fixtures.entryUserJs(
+          Fixtures.ssriHeaders(tplData),
+        ),
+        '/dist/output.meta.js': Fixtures.ssriHeaders(tplData),
+      }),
+    );
+
+    expect(readJSON(output, '/data/ssri-lock.json')).toEqual(
+      JSON.parse(Fixtures.multiAlgorithmsSSRILockJson(tplData)),
+    );
+  });
+
+  it('should throw if fetching sources falied', () => {
+    const promise = compile(input, {
+      ...Fixtures.webpackConfig,
+      plugins: [
+        new UserscriptPlugin({
+          headers: {
+            require: `http://localhost:${server.port}/not-exist.js`,
+          },
+          ssri: {},
+        }),
+      ],
+    });
+
+    return expect(promise).toReject();
+  });
 });

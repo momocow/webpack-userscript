@@ -6,11 +6,13 @@ import _fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 
+export interface Stats {
+  isFile: () => boolean;
+  isDirectory: () => boolean;
+}
+
 export interface FsStat {
-  stat(
-    path: string,
-    callback: (err: Error | null, stats: { isFile: () => boolean }) => void,
-  ): void;
+  stat(path: string, callback: (err: Error | null, stats: Stats) => void): void;
 }
 
 export interface FsReadFile {
@@ -34,6 +36,25 @@ export interface FsMkdir {
     callback: (err: Error | null, path?: string) => void,
   ): void;
 }
+
+// eslint-disable-next-line max-len
+// export async function findNode(file: string, fs: FsStat = _fs): Promise<Stats> {
+//   const statAsync = promisify(fs.stat);
+
+//   let node = file;
+//   while (true) {
+//     const parent = path.dirname(node);
+//     try {
+//       return await statAsync(node);
+//     } catch (e) {
+//       // root directory
+//       if (node === parent) {
+//         throw new Error(`package.json is not found`);
+//       }
+//     }
+//     node = parent;
+//   }
+// }
 
 export async function findPackage(
   cwd: string,
@@ -80,9 +101,18 @@ export async function writeJSON(
 
 export async function mkdirp(
   dir: string,
-  fs: FsMkdir = _fs,
+  fs: FsMkdir & FsStat = _fs,
 ): Promise<string | undefined> {
-  const mkdirAsync = promisify(fs.mkdir);
+  const statAsync = promisify(fs.stat);
+  // const mkdirAsync = promisify(fs.mkdir);
 
-  return await mkdirAsync(dir);
+  // const queue = [];
+
+  while (true) {
+    try {
+      await statAsync(dir);
+    } catch {
+      dir = path.dirname(dir);
+    }
+  }
 }
