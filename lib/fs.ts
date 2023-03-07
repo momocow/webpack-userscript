@@ -2,7 +2,6 @@
  * FS-implementation aware functions.
  * @module
  */
-import _fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 
@@ -33,33 +32,12 @@ export interface FsWriteFile {
 export interface FsMkdir {
   mkdir(
     path: string,
+    options: { recursive?: boolean },
     callback: (err: Error | null, path?: string) => void,
   ): void;
 }
 
-// eslint-disable-next-line max-len
-// export async function findNode(file: string, fs: FsStat = _fs): Promise<Stats> {
-//   const statAsync = promisify(fs.stat);
-
-//   let node = file;
-//   while (true) {
-//     const parent = path.dirname(node);
-//     try {
-//       return await statAsync(node);
-//     } catch (e) {
-//       // root directory
-//       if (node === parent) {
-//         throw new Error(`package.json is not found`);
-//       }
-//     }
-//     node = parent;
-//   }
-// }
-
-export async function findPackage(
-  cwd: string,
-  fs: FsStat = _fs,
-): Promise<string> {
+export async function findPackage(cwd: string, fs: FsStat): Promise<string> {
   const statAsync = promisify(fs.stat);
 
   let dir = cwd;
@@ -80,10 +58,7 @@ export async function findPackage(
   }
 }
 
-export async function readJSON<T>(
-  file: string,
-  fs: FsReadFile = _fs,
-): Promise<T> {
+export async function readJSON<T>(file: string, fs: FsReadFile): Promise<T> {
   const readFileAsync = promisify(fs.readFile);
   const buf = await readFileAsync(file);
 
@@ -93,7 +68,7 @@ export async function readJSON<T>(
 export async function writeJSON(
   file: string,
   data: unknown,
-  fs: FsWriteFile = _fs,
+  fs: FsWriteFile,
 ): Promise<void> {
   const writeFileAsync = promisify(fs.writeFile);
   await writeFileAsync(file, Buffer.from(JSON.stringify(data), 'utf-8'));
@@ -101,18 +76,9 @@ export async function writeJSON(
 
 export async function mkdirp(
   dir: string,
-  fs: FsMkdir & FsStat = _fs,
+  fs: FsMkdir,
 ): Promise<string | undefined> {
-  const statAsync = promisify(fs.stat);
-  // const mkdirAsync = promisify(fs.mkdir);
+  const mkdirAsync = promisify(fs.mkdir);
 
-  // const queue = [];
-
-  // while (true) {
-  //   try {
-  //     await statAsync(dir);
-  //   } catch {
-  //     dir = path.dirname(dir);
-  //   }
-  // }
+  return await mkdirAsync(dir, { recursive: true });
 }

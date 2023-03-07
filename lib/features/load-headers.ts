@@ -47,7 +47,7 @@ export class LoadHeaders extends Feature<LoadHeadersOptions> {
       );
 
       if (typeof this.options.headers === 'string') {
-        const headersFile = path.join(
+        const headersFile = path.resolve(
           this.options.root ?? compilation.compiler.context,
           this.options.headers,
         );

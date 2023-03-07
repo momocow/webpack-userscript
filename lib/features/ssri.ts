@@ -14,7 +14,6 @@ import { URL } from 'url';
 import {
   FsMkdir,
   FsReadFile,
-  FsStat,
   FsWriteFile,
   mkdirp,
   readJSON,
@@ -78,7 +77,7 @@ export class ProcessSSRI extends Feature<SSRIOptions> {
       try {
         this.ssriLock = this.parseSSRILock(
           await readJSON<RawSSRILock>(
-            path.join(root ?? compiler.context, lockfile),
+            path.resolve(root ?? compiler.context, lockfile),
             compiler.inputFileSystem as FsReadFile,
           ),
         );
@@ -94,7 +93,7 @@ export class ProcessSSRI extends Feature<SSRIOptions> {
         return;
       }
 
-      const lockfile = path.join(root ?? compiler.context, lock);
+      const lockfile = path.resolve(root ?? compiler.context, lock);
 
       if (this.ssriLockDirty) {
         const { intermediateFileSystem } = compiler;
@@ -103,7 +102,7 @@ export class ProcessSSRI extends Feature<SSRIOptions> {
         const isNotRoot = path.dirname(dir) !== dir;
 
         if (isNotRoot) {
-          await mkdirp(dir, intermediateFileSystem as FsMkdir & FsStat);
+          await mkdirp(dir, intermediateFileSystem as FsMkdir);
         }
 
         await writeJSON(
