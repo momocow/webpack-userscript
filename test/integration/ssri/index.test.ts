@@ -448,19 +448,19 @@ describe('ssri', () => {
     );
   });
 
-  it.skip('should throw if fetching sources falied', () => {
-    const promise = compile(input, {
-      ...Fixtures.webpackConfig,
-      plugins: [
-        new UserscriptPlugin({
-          headers: {
-            require: `http://localhost:${server.port}/not-exist.js`,
-          },
-          ssri: {},
-        }),
-      ],
-    });
-
-    return expect(promise).toReject();
+  it('should throw if fetching sources falied', () => {
+    return expect(
+      compile(input, {
+        ...Fixtures.webpackConfig,
+        plugins: [
+          new UserscriptPlugin({
+            headers: {
+              require: `http://localhost:${server.port}/not-exist.js`,
+            },
+            ssri: {},
+          }),
+        ],
+      }),
+    ).rejects.toThrow(/404 Not Found/);
   });
 });

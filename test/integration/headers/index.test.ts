@@ -122,6 +122,7 @@ describe('headers', () => {
                 test: 'http://example.com/demo.jpg',
               },
               noframes: true,
+              unwrap: false,
             },
             pretty: true,
           }),
