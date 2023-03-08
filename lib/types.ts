@@ -81,6 +81,7 @@ export interface FileInfo {
   basename: string;
   query: string;
   dirname: string;
+  extname: string;
 }
 
 export interface CompilationContext {
