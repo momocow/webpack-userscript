@@ -57,16 +57,18 @@ export class LoadHeaders extends Feature<LoadHeadersOptions> {
         if (
           ts &&
           typeof ts === 'object' &&
-          this.headersFileTimestamp >= ts.safeTime
+          typeof ts.timestamp === 'number' &&
+          this.headersFileTimestamp >= ts.timestamp
         ) {
+          // file no change
           return;
         }
 
         if (ts && typeof ts === 'object') {
-          this.headersFileTimestamp = ts.safeTime;
+          this.headersFileTimestamp = ts.timestamp ?? this.headersFileTimestamp;
         }
 
-        this.fileHeaders = await readJSON<HeadersProps>(
+        this.fileHeaders = await this.loadFromHeadersFile(
           headersFile,
           compilation.inputFileSystem as FsReadFile,
         );
@@ -121,6 +123,13 @@ export class LoadHeaders extends Feature<LoadHeadersOptions> {
     } catch (e) {
       return {};
     }
+  }
+
+  private loadFromHeadersFile(
+    headersFile: string,
+    fs: FsReadFile,
+  ): Promise<HeadersProps> {
+    return readJSON<HeadersProps>(headersFile, fs);
   }
 }
 
