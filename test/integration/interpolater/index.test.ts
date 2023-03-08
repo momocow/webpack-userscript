@@ -5,6 +5,7 @@ import { Volume } from '../volume';
 import { Fixtures } from './fixtures';
 
 jest.mock('webpack-userscript/utils', () => ({
+  ...jest.requireActual('webpack-userscript/utils'),
   date: (): Date => new Date(0),
 }));
 
