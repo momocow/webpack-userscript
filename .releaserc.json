@@ -1,4 +1,11 @@
 {
+  "branches": [
+    "main",
+    {
+      "name": "alpha",
+      "prerelease": true
+    }
+  ],
   "plugins": [
     "semantic-release-gitmoji",
     "@semantic-release/github",
