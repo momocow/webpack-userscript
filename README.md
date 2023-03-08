@@ -1,27 +1,22 @@
 # webpack-userscript
 
-[![Build Status](https://travis-ci.org/momocow/webpack-userscript.svg?branch=master)](https://travis-ci.org/momocow/webpack-userscript)
-[![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
-[![npm](https://img.shields.io/npm/v/webpack-userscript.svg)](https://www.npmjs.com/webpack-userscript)
+[![Test Status](https://github.com/momocow/webpack-userscript/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/momocow/webpack-userscript/actions/workflows/test.yaml)
+[![Release Status](https://github.com/momocow/webpack-userscript/actions/workflows/release.yaml/badge.svg?branch=main)](https://github.com/momocow/webpack-userscript/actions/workflows/release.yaml)
+[![Coding Style](https://img.shields.io/badge/coding%20style-recommended-orange.svg?style=flat)](https://gitmoji.carloscuesta.me/)
+[![npm](https://img.shields.io/npm/v/webpack-userscript.svg)](https://www.npmjs.com/package/webpack-userscript/v/latest)
 [![Gitmoji](https://img.shields.io/badge/gitmoji-%20😜%20😍-FFDD67.svg?style=flat-square)](https://gitmoji.carloscuesta.me/)
 
-A Webpack4+ plugin for userscript projects. 🙈
-
-> The package has been renamed from `webpack-tampermonkey`.
+A Webpack plugin for userscript projects. 🙈
 
 ## Features
 
 - Combine your userscript development with Webpack
-  > With powerful Webpack support, you can even package everything in your userscript, e.g. icons and json data.
-- Ability to generate userscript headers
 - Ability to generate both `.user.js` and `.meta.js`
-  > `.meta.js` is used for update check containing headers only.
 - Properly track files in watch mode
-  > Including external header files and package.json.
-- Helper mode to integrate with Webpack Dev Server and TamperMonkey.
-  > Additionally ouput proxy scripts along with main userscripts, which looks similar with `*.meta.js` but with additional `@require` meta field to include the main userscript, then you can set your TamperMonkey not to cache external files. It's useful when the script is under development.
-- Support generating SRIs for `@require` and `@resource` URLs if the protocol is either `http` or `https`.
-  > since v2.5.0
+- Ability to generate proxy scripts to integrate with Webpack Dev Server and TamperMonkey.
+  > See [Issue#63](https://github.com/momocow/webpack-userscript/issues/63) for more information.
+- Support generating SSRIs for `@require` and `@resource` URLs.
+- > See [Subresource Integrity](https://www.tampermonkey.net/documentation.php#api:Subresource_Integrity) from TamperMonkey documentation.
 
 ## Installation
 
@@ -43,7 +38,7 @@ module.exports = {
 };
 ```
 
-## Examples
+## Features
 
 ### Hot Development
 
@@ -76,8 +71,15 @@ module.exports = {
   },
   plugins: [
     new WebpackUserscript({
-      headers: {
-        version: dev ? `[version]-build.[buildNo]` : `[version]`,
+      headers(original) {
+        if (dev) {
+          return {
+            ...original,
+            version: `${original.version}-build.[buildNo]`,
+          }
+        }
+
+        return original;
       },
     }),
   ],
@@ -98,13 +100,13 @@ To avoid caching and make the main script always be updated after each page refr
 
 To enable the proxy script, provide a `proxyScript` configuration to the plugin constructor.
 
-Set `proxyScript.enable` to `true` will always enable proxy script, or you can provide a function that returns boolean. In the example below, the proxy script is enabled if the environment contains a variable, `LOCAL_DEV`, which is equal to `"1"`.
-
 `baseUrl` should be the base URL of the dev server, and the `filename` is for the proxy script.
+
+> Note: `filename` will be interpolated.
 
 After starting the dev server, you can find your proxy script under `<baseUrl>/<filename>`. In the example below, assume the entry filename is `index.js`, you should visit `http://127.0.0.1:12345/index.proxy.user.js` to install the proxy script on TamperMonkey.
 
-> Notes that the leaf values of `proxyScript` with also be interpolated; that is, template variables which can be found [here](#dataobject) are also supported inside these string settings.
+See [Issue#63](https://github.com/momocow/webpack-userscript/issues/63) for more information.
 
 ```js
 new WebpackUserscript({
@@ -112,200 +114,26 @@ new WebpackUserscript({
   proxyScript: {
     baseUrl: 'http://127.0.0.1:12345',
     filename: '[basename].proxy.user.js',
-    enable: () => process.env.LOCAL_DEV === '1',
   },
 });
 ```
 
-### Other
+### Interpolation
 
-Other examples can be found under [the test fixture folder](./test/fixtures).
+Possible interpolation variables are as follows.
+
+- `[name]`: chunk name
+- `[buildNo]`: build number starting from 1 at beginning of watch mode
+- `[buildTime]`: the timestamp in millisecond when the compilation starts
+- `[file]`: full path of the file
+  - = `[dirname]` + `[basename]` + `[extname]` + `[query]`
+- `[filename]`: file path
+  - = `[basename]` + `[extname]`
+- `[dirname]`: directory path
+- `[basename]`: file base name
+- `[extname]`: file extension starting with `.`
+- `[query]`: query string starting with `?`
 
 ## Configuration
 
-### WebpackUserscript
-
-The `WebpackUserscript` constructor has the following signature.
-
-```js
-new WebpackUserscript(options);
-```
-
-### options
-
-> Also see [the schema of options](./lib/schemas/options.json).
-
-```ts
-type WebpackUserscriptOptions =
-  | WPUSOptions
-  | HeaderFile // shorthand for WPUSOptions.headers
-  | HeaderProvider; // shorthand for WPUSOptions.headers
-```
-
-#### WPUSOptions
-
-```ts
-interface WPUSOptions {
-  headers: HeaderFile | HeaderProvider | HeaderObject;
-
-  /**
-   * Output *.meta.js or not
-   */
-  metajs: boolean;
-
-  /**
-   * Rename all .js files to .user.js files.
-   */
-  renameExt: boolean;
-
-  /**
-   * Prettify the header
-   */
-  pretty: boolean;
-
-  /**
-   * Base URL for downloadURL.
-   * If not provided, it will be set to `updateBaseUrl` if `updateBaseUrl` is provided
-   */
-  downloadBaseUrl: string;
-
-  /**
-   * Base URL for updateURL
-   * If not provided, it will be set to `downloadBaseUrl` if `downloadBaseUrl` is provided
-   */
-  updateBaseUrl: string;
-
-  /**
-   * Looks similar with `*.meta.js` but with additional `@require` meta field to include the main userscript.
-   * It can be useful if you set the TamperMonkey not to cache external files.
-   */
-  proxyScript: {
-    /**
-     * filename template of the proxy script, defaults to "[basename].proxy.user.js"
-     */
-    filename: string;
-
-    /**
-     * Base URL of the dev server
-     */
-    baseUrl: string;
-
-    /**
-     * Whether to enable proxy script generation,
-     * default value depends on whether `process.env.WEBPACK_DEV_SERVER` is `"true"` or not
-     */
-    enable: boolean | (() => boolean);
-  };
-
-  ssri:
-    | boolean
-    | {
-        /**
-         * URL filters.
-         * Each of them is actually testing against a string compound of the meta field and the url.
-         * For example, if a header is provided as `{ require: "http://example.com/sth.js" }`,
-         * a string of "// @require http://example.com/sth.js" is tested with the provided filters.
-         */
-        include: string | RegExp | string[] | RegExp[];
-        exclude: string | RegExp | string[] | RegExp[];
-
-        /**
-         * @see https://github.com/npm/ssri#--integritystreamopts---integritystream
-         */
-        algorithms: ('sha256' | 'sha384' | 'sha512')[];
-        integrity: string;
-        size: number;
-      };
-}
-```
-
-#### HeaderFile
-
-A path to a js or json file which exports a header object or a header provider function.
-
-```ts
-type HeaderFile = string;
-```
-
-#### HeaderProvider
-
-A function that returns a header object.
-
-```ts
-type HeaderProvider = (data: DataObject) => HeaderObject;
-```
-
-#### HeaderObject
-
-A header object, whose leaves are webpack-like template strings in `[<var_name>]` format. Available variables can be found at [DataObject](#dataobject).
-
-> Also see [explicit-config/webpack.config.js](./test/fixtures/explicit-config/webpack.config.js#L13) and [template-strings/webpack.config.js](./test/fixtures/template-strings/webpack.config.js#L16).
-
-```ts
-type HeaderObject = Record<string, string | Array<string>>;
-```
-
-#### DataObject
-
-Local variables used to interpolate the templates of a [HeaderObject](#headerobject).
-
-```ts
-interface DataObject {
-  /**
-   * Hash of Webpack compilation
-   */
-  hash: string;
-
-  /**
-   * Webpack chunk hash
-   */
-  chunkHash: string;
-
-  /**
-   * Webpack chunk name
-   */
-  chunkName: string;
-
-  /**
-   * Entry file path, which may contain queries
-   */
-  file: string;
-
-  /**
-   * just like `file` but without queries
-   */
-  filename: string;
-
-  /**
-   * just like `filename` but without file extension, i.e. ".user.js" or ".js"
-   */
-  basename: string;
-
-  /**
-   * Query string
-   */
-  query: string;
-
-  /**
-   * Build number
-   */
-  buildNo: number;
-
-  /**
-   * the 13-digits number represents the time the script is built
-   */
-  buildTime: number;
-
-  /**
-   * Info from package.json
-   */
-  name: string;
-  version: string;
-  description: string;
-  author: string;
-  homepage: string;
-  bugs: string; // URL
-}
-```
-
-> Also see [template-strings/webpack.config.js](./test/fixtures/template-strings/webpack.config.js#L16).
+See [UserscriptOptions](https://cow.moe/webpack-userscript/types/UserscriptOptions.html).

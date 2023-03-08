@@ -184,16 +184,16 @@ export class UserscriptPlugin
         if (q < 0) {
           q = originalFile.length;
         }
-        const filename = originalFile.slice(0, q);
+        const filepath = originalFile.slice(0, q);
         const query = originalFile.slice(q);
-        const extname = path.extname(filename);
-
-        const dirname = path.dirname(filename);
-        const basename = filename.endsWith('.user.js')
-          ? path.basename(filename, '.user.js')
-          : filename.endsWith('.js')
-          ? path.basename(filename, '.js')
-          : filename;
+        const dirname = path.dirname(filepath);
+        const filename = path.basename(filepath);
+        const basename = filepath.endsWith('.user.js')
+          ? path.basename(filepath, '.user.js')
+          : filepath.endsWith('.js')
+          ? path.basename(filepath, '.js')
+          : filepath;
+        const extname = path.extname(filepath);
 
         const userjsFile = path.join(dirname, basename + '.user.js') + query;
         const metajsFile = path.join(dirname, basename + '.meta.js');
@@ -207,6 +207,7 @@ export class UserscriptPlugin
           dirname,
           basename,
           query,
+          extname,
         };
 
         if (this.options.skip?.(fileInfoEntry) ?? extname !== '.js') {
