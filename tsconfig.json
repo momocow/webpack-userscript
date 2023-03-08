@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "es6",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "declaration": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "importHelpers": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "sourceMap": true,
+    "outDir": "./dist/",
+    "types": ["node", "jest"],
+    "lib": ["ESNext"],
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "webpack-userscript": ["lib"],
+      "webpack-userscript/*": ["lib/*"]
+    }
+  },
+  "include": ["**/*.ts"]
+}

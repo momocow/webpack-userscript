@@ -1,0 +1,5 @@
+// ==UserScript==
+// @name package-json-bugs
+// @supportURL https://bugs.example.com/
+// @match *://*/*
+// ==/UserScript==

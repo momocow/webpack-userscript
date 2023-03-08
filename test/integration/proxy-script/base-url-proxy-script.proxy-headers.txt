@@ -1,0 +1,7 @@
+// ==UserScript==
+// @name userscript
+// @description this is a fantastic userscript
+// @version 0.0.0
+// @match *://*/*
+// @require http://base.example.com/output.user.js
+// ==/UserScript==
