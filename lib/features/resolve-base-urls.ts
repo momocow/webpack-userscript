@@ -32,11 +32,10 @@ export class ResolveBaseURLs extends Feature<ResolveBaseURLsOptions> {
         if (headers.updateURL === undefined) {
           headers = {
             ...headers,
-            updateURL: metajs
-              ? new URL(metajsFile, updateBaseURL).toString()
-              : updateBaseURL !== undefined
-              ? new URL(userjsFile, updateBaseURL).toString()
-              : headers.downloadURL,
+            updateURL: new URL(
+              metajs ? metajsFile : userjsFile,
+              updateBaseURL ?? downloadBaseURL,
+            ).toString(),
           };
         }
 
