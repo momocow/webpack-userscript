@@ -12,7 +12,7 @@ describe('resolve base urls', () => {
   const findDownloadURL = findTags.bind(
     undefined,
     'downloadURL',
-    Fixtures.downloadURL,
+    Fixtures.downloadURLWithUserjs,
   );
 
   beforeEach(async () => {
@@ -26,7 +26,7 @@ describe('resolve base urls', () => {
     const findUpdateURLByMetajs = findTags.bind(
       undefined,
       'updateURL',
-      Fixtures.updateURLByMetajs,
+      Fixtures.updateURLWithMetajs,
     );
 
     const output = await compile(input, {
@@ -53,11 +53,11 @@ describe('resolve base urls', () => {
     expect(findUpdateURLByMetajs(metaJs)).toHaveLength(1);
   });
 
-  it('should resolve updateURL by userjs', async () => {
+  it('should resolve updateURL with updateBaseURL and userjs', async () => {
     const findUpdateURLByUserjs = findTags.bind(
       undefined,
       'updateURL',
-      Fixtures.updateURLByUserjs,
+      Fixtures.updateURLWithUserjs,
     );
 
     const output = await compile(input, {
@@ -79,11 +79,11 @@ describe('resolve base urls', () => {
     expect(findUpdateURLByUserjs(userJs)).toHaveLength(1);
   });
 
-  it('should resolve updateURL by downloadURL', async () => {
+  it('should resolve updateURL by downloadBaseURL and userjs', async () => {
     const findUpdateURLByDownloadURL = findTags.bind(
       undefined,
       'updateURL',
-      Fixtures.downloadURL,
+      Fixtures.downloadURLWithUserjs,
     );
 
     const output = await compile(input, {
@@ -92,6 +92,31 @@ describe('resolve base urls', () => {
         new UserscriptPlugin({
           downloadBaseURL: new URL('http://download.example.com'),
           metajs: false,
+        }),
+      ],
+    });
+
+    const userJs = output
+      .readFileSync('/dist/output.user.js')
+      .toString('utf-8');
+
+    expect(findDownloadURL(userJs)).toHaveLength(1);
+    expect(findUpdateURLByDownloadURL(userJs)).toHaveLength(1);
+  });
+
+  it('should resolve updateURL by downloadBaseURL and metajs', async () => {
+    const findUpdateURLByDownloadURL = findTags.bind(
+      undefined,
+      'updateURL',
+      Fixtures.downloadURLWithMetajs,
+    );
+
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      plugins: [
+        new UserscriptPlugin({
+          downloadBaseURL: new URL('http://download.example.com'),
+          metajs: true,
         }),
       ],
     });
