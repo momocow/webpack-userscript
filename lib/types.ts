@@ -123,3 +123,20 @@ export type UserscriptOptions = LoadHeadersOptions &
   RenderHeadersOptions &
   ValidateHeadersOptions &
   UserscriptPluginOptions;
+
+export {
+  Feature,
+  HeaderClass,
+  HeadersProvider,
+  LoadHeadersOptions,
+  ProxyScriptFeatureOptions,
+  ProxyScriptOptions,
+  RenderHeadersOptions,
+  ResolveBaseURLsOptions,
+  SSRIAlgorithm,
+  SSRIFeatureOptions,
+  SSRIOptions,
+  SSRITag,
+  URLFilter,
+  ValidateHeadersOptions,
+} from './features';
