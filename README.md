@@ -31,10 +31,10 @@ npm i webpack-userscript -D
 Include the plugin in the `webpack.config.js` as the following example.
 
 ```js
-const WebpackUserscript = require('webpack-userscript');
+const { UserscriptPlugin } = require('webpack-userscript');
 
 module.exports = {
-  plugins: [new WebpackUserscript()],
+  plugins: [new UserscriptPlugin()],
 };
 ```
 
@@ -56,7 +56,7 @@ After the first time starting the `webpack-dev-server`, you can install the scri
 
 ```js
 const path = require('path');
-const WebpackUserscript = require('webpack-userscript');
+const { UserscriptPlugin } = require('webpack-userscript');
 const dev = process.env.NODE_ENV === 'development';
 
 module.exports = {
@@ -70,7 +70,7 @@ module.exports = {
     contentBase: path.join(__dirname, 'dist'),
   },
   plugins: [
-    new WebpackUserscript({
+    new UserscriptPlugin({
       headers(original) {
         if (dev) {
           return {
