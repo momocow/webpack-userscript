@@ -2,7 +2,8 @@
 // @name        userscript
 // @description this is a fantastic userscript
 // @version     0.0.0
-// @match       *://*/*
+// @include     https://example.com/
+// @include     http://example.com/
 // @noframes
 // @resource    test http://example.com/demo.jpg
 // ==/UserScript==
