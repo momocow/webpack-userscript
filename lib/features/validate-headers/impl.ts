@@ -52,7 +52,11 @@ export class ValidateHeaders extends Feature<ValidateHeadersOptions> {
       });
 
       if (errors.length > 0) {
-        throw new Error(errors.map((err) => err.toString()).join('\n'));
+        throw new Error(
+          errors
+            .map((err) => err.toString(undefined, undefined, undefined, true))
+            .join('\n'),
+        );
       }
     }
 
