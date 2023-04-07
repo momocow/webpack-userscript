@@ -108,6 +108,54 @@ describe('headers', () => {
 
         return expect(promise).toReject();
       });
+
+      for (const [tag, { validValues, invalidValues }] of Object.entries(
+        Fixtures.tagSamples,
+      )) {
+        describe(tag, () => {
+          for (const { value, expect: expectedOutput } of validValues) {
+            it('valid', async () => {
+              const output = await compile(input, {
+                ...Fixtures.webpackConfig,
+                plugins: [
+                  new UserscriptPlugin({
+                    headers: {
+                      [tag]: value,
+                    },
+                  }),
+                ],
+              });
+
+              const userJs = output
+                .readFileSync('/dist/output.user.js')
+                .toString('utf-8');
+              const metaJs = output
+                .readFileSync('/dist/output.meta.js')
+                .toString('utf-8');
+
+              expect(findTags(tag, expectedOutput, userJs)).toHaveLength(1);
+              expect(findTags(tag, expectedOutput, metaJs)).toHaveLength(1);
+            });
+          }
+
+          for (const { value } of invalidValues) {
+            it('invalid', () => {
+              const promise = compile(input, {
+                ...Fixtures.webpackConfig,
+                plugins: [
+                  new UserscriptPlugin({
+                    headers: {
+                      [tag]: value,
+                    },
+                  }),
+                ],
+              });
+
+              return expect(promise).toReject();
+            });
+          }
+        });
+      }
     });
   });
 
@@ -121,6 +169,7 @@ describe('headers', () => {
               resource: {
                 test: 'http://example.com/demo.jpg',
               },
+              include: ['https://example.com/', 'http://example.com/'],
               noframes: true,
               unwrap: false,
             },
