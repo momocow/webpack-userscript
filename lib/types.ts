@@ -27,12 +27,34 @@ export type ValueType =
   | SwitchValue
   | undefined;
 
-export enum RunAtValue {
+export type EnumValue<T extends string> = T | `${T}`;
+
+export enum RunAt {
   DocumentStart = 'document-start',
   DocumentBody = 'document-body',
   DocumentEnd = 'document-end',
   DocumentIdle = 'document-idle',
   ContextMenu = 'context-menu',
+}
+
+export enum Sandbox {
+  Raw = 'raw',
+  JavaScript = 'JavaScript',
+  DOM = 'DOM',
+}
+
+export enum InjectInto {
+  Page = 'page',
+  Content = 'content',
+  Auto = 'auto',
+}
+
+export interface CompatibilityValue extends NamedValue {
+  firefox?: string;
+  chrome?: string;
+  opera?: string;
+  safari?: string;
+  edge?: string;
 }
 
 export interface StrictHeadersProps {
@@ -56,6 +78,7 @@ export interface StrictHeadersProps {
   supportURL?: SingleValue;
   include?: MultiValue;
   match?: MultiValue;
+  'exclude-match'?: MultiValue;
   exclude?: MultiValue;
   require?: MultiValue;
   resource?: NamedValue;
@@ -65,7 +88,15 @@ export interface StrictHeadersProps {
   noframes?: SwitchValue;
   unwrap?: SwitchValue;
   antifeature?: NamedValue;
-  ['run-at']?: RunAtValue;
+  'run-at'?: EnumValue<RunAt>;
+  copyright?: SingleValue;
+  sandbox?: EnumValue<Sandbox>;
+  'inject-into'?: EnumValue<InjectInto>;
+  license?: SingleValue;
+  contributionURL?: SingleValue;
+  contributionAmount?: SingleValue;
+  compatible?: CompatibilityValue;
+  incompatible?: CompatibilityValue;
 }
 
 export interface HeadersProps extends StrictHeadersProps {

@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -7,17 +7,49 @@ import {
   IsSemVer,
   IsString,
   IsUrl,
+  ValidateNested,
 } from 'class-validator';
 
-// import { getBorderCharacters, table } from 'table';
 import {
+  CompatibilityValue,
+  InjectInto,
   MultiValue,
   NamedValue,
-  RunAtValue,
+  RunAt,
+  Sandbox,
   SingleValue,
   StrictHeadersProps,
   SwitchValue,
 } from '../../types';
+
+class Compatibility implements CompatibilityValue {
+  [x: string]: SingleValue;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  public readonly firefox?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  public readonly chrome?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  public readonly opera?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  public readonly safari?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  public readonly edge?: string;
+}
 
 export class Headers implements StrictHeadersProps {
   @Expose()
@@ -122,6 +154,11 @@ export class Headers implements StrictHeadersProps {
   @Expose()
   @IsOptional()
   @IsString({ each: true })
+  public readonly 'exclude-match'?: MultiValue;
+
+  @Expose()
+  @IsOptional()
+  @IsString({ each: true })
   public readonly exclude?: MultiValue;
 
   @Expose()
@@ -166,6 +203,48 @@ export class Headers implements StrictHeadersProps {
 
   @Expose()
   @IsOptional()
-  @IsEnum(RunAtValue)
-  public readonly ['run-at']?: RunAtValue;
+  @IsEnum(RunAt)
+  public readonly 'run-at'?: RunAt;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  public readonly copyright?: SingleValue;
+
+  @Expose()
+  @IsOptional()
+  @IsEnum(Sandbox)
+  public readonly sandbox?: Sandbox;
+
+  @Expose()
+  @IsOptional()
+  @IsEnum(InjectInto)
+  public readonly 'inject-into'?: InjectInto;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  public readonly license?: SingleValue;
+
+  @Expose()
+  @IsOptional()
+  @IsUrl()
+  public readonly contributionURL?: SingleValue;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  public readonly contributionAmount?: SingleValue;
+
+  @Expose()
+  @Type(() => Compatibility)
+  @IsOptional()
+  @ValidateNested()
+  public readonly compatible?: Compatibility;
+
+  @Expose()
+  @Type(() => Compatibility)
+  @IsOptional()
+  @ValidateNested()
+  public readonly incompatible?: Compatibility;
 }

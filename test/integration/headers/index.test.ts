@@ -114,7 +114,7 @@ describe('headers', () => {
       )) {
         describe(tag, () => {
           for (const { value, expect: expectedOutput } of validValues) {
-            it('valid', async () => {
+            it('valid case: ' + JSON.stringify(value), async () => {
               const output = await compile(input, {
                 ...Fixtures.webpackConfig,
                 plugins: [
@@ -133,13 +133,18 @@ describe('headers', () => {
                 .readFileSync('/dist/output.meta.js')
                 .toString('utf-8');
 
-              expect(findTags(tag, expectedOutput, userJs)).toHaveLength(1);
-              expect(findTags(tag, expectedOutput, metaJs)).toHaveLength(1);
+              const expectedOutputList = !Array.isArray(expectedOutput)
+                ? [expectedOutput]
+                : expectedOutput;
+              for (const outputValue of expectedOutputList) {
+                expect(findTags(tag, outputValue, userJs)).toHaveLength(1);
+                expect(findTags(tag, outputValue, metaJs)).toHaveLength(1);
+              }
             });
           }
 
           for (const { value } of invalidValues) {
-            it('invalid', () => {
+            it('invalid case: ' + JSON.stringify(value), () => {
               const promise = compile(input, {
                 ...Fixtures.webpackConfig,
                 plugins: [
