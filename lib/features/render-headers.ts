@@ -81,10 +81,13 @@ export class RenderHeaders extends Feature<RenderHeadersOptions> {
 
   protected renderTag(tag: TagType, value: ValueType): string[][] {
     if (Array.isArray(value)) {
-      return value.map((v) => [`// @${tag}`, v]);
+      return value.map((v) => [`// @${tag}`, v ?? '']);
     }
     if (typeof value === 'object') {
-      return Object.entries(value).map(([k, v]) => [`// @${tag}`, `${k} ${v}`]);
+      return Object.entries(value).map(([k, v]) => [
+        `// @${tag}`,
+        `${k} ${v ?? ''}`,
+      ]);
     }
     if (typeof value === 'string') {
       return [[`// @${tag}`, value]];

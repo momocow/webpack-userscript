@@ -14,18 +14,18 @@ import {
   ValidateHeadersOptions,
 } from './features';
 
+export type SingleValue = string | undefined;
+export type MultiValue = SingleValue | SingleValue[];
+export type NamedValue = Record<string, SingleValue>;
+export type SwitchValue = boolean;
+
 export type TagType = string;
 export type ValueType =
-  | Record<string, string>
-  | string[]
-  | string
-  | boolean
+  | NamedValue
+  | MultiValue
+  | SingleValue
+  | SwitchValue
   | undefined;
-
-export type SingleValue = string;
-export type MultiValue = string | string[];
-export type NamedValue = Record<string, string>;
-export type SwitchValue = boolean;
 
 export enum RunAtValue {
   DocumentStart = 'document-start',

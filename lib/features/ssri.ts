@@ -196,9 +196,9 @@ export class ProcessSSRI extends Feature<SSRIOptions> {
     const urls: string[] = [];
 
     if (headers.require !== undefined) {
-      const requireURLs = Array.isArray(headers.require)
-        ? headers.require
-        : [headers.require];
+      const requireURLs = (
+        Array.isArray(headers.require) ? headers.require : [headers.require]
+      ).filter((url): url is string => typeof url === 'string');
 
       for (const urlStr of requireURLs) {
         const url = this.parseURL(urlStr);
@@ -209,7 +209,9 @@ export class ProcessSSRI extends Feature<SSRIOptions> {
     }
 
     if (headers.resource !== undefined) {
-      for (const urlStr of Object.values(headers.resource)) {
+      for (const urlStr of Object.values(headers.resource).filter(
+        (url): url is string => typeof url === 'string',
+      )) {
         const url = this.parseURL(urlStr);
         if (this.filterURL(url, 'resource', options)) {
           urls.push(this.stringifyURL(url));
@@ -316,9 +318,9 @@ export class ProcessSSRI extends Feature<SSRIOptions> {
 
     if (headers.require !== undefined) {
       if (Array.isArray(headers.require)) {
-        headersProps.require = headers.require.map((url) =>
-          this.updateURL(url, ssriLock),
-        );
+        headersProps.require = headers.require
+          .filter((url): url is string => typeof url === 'string')
+          .map((url) => this.updateURL(url, ssriLock));
       } else {
         headersProps.require = this.updateURL(headers.require, ssriLock);
       }
@@ -326,10 +328,11 @@ export class ProcessSSRI extends Feature<SSRIOptions> {
 
     if (headers.resource !== undefined) {
       headersProps.resource = Object.fromEntries(
-        Object.entries(headers.resource).map(([name, url]) => [
-          name,
-          this.updateURL(url, ssriLock),
-        ]),
+        Object.entries(headers.resource)
+          .filter(
+            (entry): entry is [string, string] => typeof entry[1] === 'string',
+          )
+          .map(([name, url]) => [name, this.updateURL(url, ssriLock)]),
       );
     }
 
