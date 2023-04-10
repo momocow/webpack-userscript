@@ -1,15 +1,3 @@
-import { Expose, Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsEnum,
-  IsObject,
-  IsOptional,
-  IsSemVer,
-  IsString,
-  IsUrl,
-  ValidateNested,
-} from 'class-validator';
-
 import {
   CompatibilityValue,
   InjectInto,
@@ -21,230 +9,164 @@ import {
   StrictHeadersProps,
   SwitchValue,
 } from '../../types';
+import { MutuallyExclusive } from '../../utils';
+import {
+  IsEnumValue,
+  IsMultiValue,
+  IsNamedValue,
+  IsNestedValue,
+  IsRequiredValue,
+  IsSingleValue,
+  IsSwitchValue,
+  IsURLValue,
+  IsVersionValue,
+} from './decorators';
 
 class Compatibility implements CompatibilityValue {
   [x: string]: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
-  public readonly firefox?: string;
+  @IsSingleValue()
+  public readonly firefox?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
-  public readonly chrome?: string;
+  @IsSingleValue()
+  public readonly chrome?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
-  public readonly opera?: string;
+  @IsSingleValue()
+  public readonly opera?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
-  public readonly safari?: string;
+  @IsSingleValue()
+  public readonly safari?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
-  public readonly edge?: string;
+  @IsSingleValue()
+  public readonly edge?: SingleValue;
 }
 
 export class Headers implements StrictHeadersProps {
-  @Expose()
-  @IsString()
+  @IsRequiredValue()
   public readonly name!: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsSemVer()
+  @IsVersionValue()
   public readonly version?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
+  @IsSingleValue()
   public readonly namespace?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
+  @IsSingleValue()
   public readonly author?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
+  @IsSingleValue()
   public readonly description?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
+  @MutuallyExclusive('homepage')
   public readonly homepage?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
+  @MutuallyExclusive('homepage')
   public readonly homepageURL?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
+  @MutuallyExclusive('homepage')
   public readonly website?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
+  @MutuallyExclusive('homepage')
   public readonly source?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
+  @MutuallyExclusive('icon')
   public readonly icon?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
+  @MutuallyExclusive('icon')
   public readonly iconURL?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
+  @MutuallyExclusive('icon')
   public readonly defaulticon?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
+  @MutuallyExclusive('icon64')
   public readonly icon64?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
+  @MutuallyExclusive('icon64')
   public readonly icon64URL?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
   public readonly updateURL?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
+  @MutuallyExclusive('downloadURL')
   public readonly downloadURL?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
+  @MutuallyExclusive('downloadURL')
   public readonly installURL?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
   public readonly supportURL?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString({ each: true })
+  @IsMultiValue()
   public readonly include?: MultiValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString({ each: true })
+  @IsMultiValue()
   public readonly match?: MultiValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString({ each: true })
+  @IsMultiValue()
   public readonly 'exclude-match'?: MultiValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString({ each: true })
+  @IsMultiValue()
   public readonly exclude?: MultiValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString({ each: true })
+  @IsMultiValue()
   public readonly require?: MultiValue;
 
-  @Expose()
-  @IsOptional()
-  @IsObject()
+  @IsNamedValue()
   public readonly resource?: NamedValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString({ each: true })
+  @IsMultiValue()
   public readonly connect?: MultiValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString({ each: true })
+  @IsMultiValue()
   public readonly grant?: MultiValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString({ each: true })
+  @IsMultiValue()
   public readonly webRequest?: MultiValue;
 
-  @Expose()
-  @IsOptional()
-  @IsBoolean()
+  @IsSwitchValue()
   public readonly noframes?: SwitchValue;
 
-  @Expose()
-  @IsOptional()
-  @IsBoolean()
+  @IsSwitchValue()
   public readonly unwrap?: SwitchValue;
 
-  @Expose()
-  @IsOptional()
-  @IsObject()
+  @IsNamedValue()
   public readonly antifeature?: NamedValue;
 
-  @Expose()
-  @IsOptional()
-  @IsEnum(RunAt)
+  @IsEnumValue(RunAt)
   public readonly 'run-at'?: RunAt;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
+  @IsSingleValue()
   public readonly copyright?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsEnum(Sandbox)
+  @IsEnumValue(Sandbox)
   public readonly sandbox?: Sandbox;
 
-  @Expose()
-  @IsOptional()
-  @IsEnum(InjectInto)
+  @IsEnumValue(InjectInto)
   public readonly 'inject-into'?: InjectInto;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
+  @IsSingleValue()
   public readonly license?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsUrl()
+  @IsURLValue()
   public readonly contributionURL?: SingleValue;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
+  @IsSingleValue()
   public readonly contributionAmount?: SingleValue;
 
-  @Expose()
-  @Type(() => Compatibility)
-  @IsOptional()
-  @ValidateNested()
+  @IsNestedValue(Compatibility)
   public readonly compatible?: Compatibility;
 
-  @Expose()
-  @Type(() => Compatibility)
-  @IsOptional()
-  @ValidateNested()
+  @IsNestedValue(Compatibility)
   public readonly incompatible?: Compatibility;
 }
