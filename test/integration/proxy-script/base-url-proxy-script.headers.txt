@@ -4,6 +4,5 @@
 // @version 0.0.0
 // @match *://*/*
 // @downloadURL http://example.com
-// @installURL http://example.com
 // @updateURL http://example.com
 // ==/UserScript==
