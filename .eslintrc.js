@@ -24,7 +24,13 @@ module.exports = {
     '@typescript-eslint/explicit-module-boundary-types': 'error',
     '@typescript-eslint/explicit-member-accessibility': 'error',
     '@typescript-eslint/no-explicit-any': 'off',
-    'max-len': ['error', { code: 80 }],
+    'max-len': [
+      'error',
+      {
+        code: 80,
+        ignoreUrls: true,
+      }
+    ],
     'simple-import-sort/imports': 'error',
     'simple-import-sort/exports': 'error',
     'import/first': 'error',
