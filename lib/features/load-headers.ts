@@ -16,9 +16,11 @@ export type HeadersProvider = (
   ctx: WaterfallContext,
 ) => HeadersProps | Promise<HeadersProps>;
 
+export type HeadersOption = HeadersProps | string | HeadersProvider;
+
 export interface LoadHeadersOptions {
   root?: string;
-  headers?: HeadersProps | string | HeadersProvider;
+  headers?: HeadersOption;
 }
 
 export class LoadHeaders extends Feature<LoadHeadersOptions> {
@@ -29,27 +31,27 @@ export class LoadHeaders extends Feature<LoadHeadersOptions> {
   private headersFileTimestamp = 0;
 
   public apply({ hooks }: UserscriptPluginInstance): void {
-    hooks.init.tapPromise(this.name, async (compiler) => {
-      const { headers } = this.options;
+    const { headers: headersOption } = this.options;
 
+    hooks.init.tapPromise(this.name, async (compiler) => {
       this.defaultHeaders = Object.assign(
         {},
         await this.loadFromPackage(compiler),
-        typeof headers === 'object' ? headers : {},
+        typeof headersOption === 'object' ? headersOption : {},
       );
     });
 
-    hooks.preprocess.tapPromise(this.name, async (compilation) => {
-      const getFileTimestampAsync = promisify(
-        compilation.fileSystemInfo.getFileTimestamp.bind(
-          compilation.fileSystemInfo,
-        ),
-      );
+    if (typeof headersOption === 'string') {
+      hooks.preprocess.tapPromise(this.name, async (compilation) => {
+        const getFileTimestampAsync = promisify(
+          compilation.fileSystemInfo.getFileTimestamp.bind(
+            compilation.fileSystemInfo,
+          ),
+        );
 
-      if (typeof this.options.headers === 'string') {
         const headersFile = path.resolve(
           this.options.root ?? compilation.compiler.context,
-          this.options.headers,
+          headersOption,
         );
 
         const ts = await getFileTimestampAsync(headersFile);
@@ -74,21 +76,19 @@ export class LoadHeaders extends Feature<LoadHeadersOptions> {
         );
 
         compilation.fileDependencies.add(headersFile);
-      }
-    });
+      });
+    }
 
-    hooks.headers.tapPromise(this.name, async (_, ctx) => {
-      const headers = {
+    if (typeof headersOption === 'function') {
+      hooks.headers.tapPromise(this.name, (_, ctx) =>
+        this.loadFromHeadersProvider(headersOption, ctx),
+      );
+    } else {
+      hooks.headers.tapPromise(this.name, async () => ({
         ...this.defaultHeaders,
         ...this.fileHeaders,
-      };
-
-      if (typeof this.options.headers === 'function') {
-        return await this.options.headers(headers, ctx);
-      }
-
-      return headers;
-    });
+      }));
+    }
   }
 
   private async loadFromPackage({
@@ -130,6 +130,19 @@ export class LoadHeaders extends Feature<LoadHeadersOptions> {
     fs: FsReadFile,
   ): Promise<HeadersProps> {
     return readJSON<HeadersProps>(headersFile, fs);
+  }
+
+  private async loadFromHeadersProvider(
+    headersProvider: HeadersProvider,
+    ctx: WaterfallContext,
+  ): Promise<HeadersProps> {
+    return headersProvider(
+      {
+        ...this.defaultHeaders,
+        ...this.fileHeaders,
+      },
+      ctx,
+    );
   }
 }
 
