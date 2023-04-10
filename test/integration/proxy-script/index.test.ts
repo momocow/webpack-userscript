@@ -22,7 +22,6 @@ describe('proxy script', () => {
           headers: {
             // these URLs should be ignored in proxy scripts
             updateURL: 'http://example.com',
-            downloadURL: 'http://example.com',
             installURL: 'http://example.com',
             // require tag will be extended in the proxy script
             require: ['http://require.example.com'],
@@ -47,7 +46,6 @@ describe('proxy script', () => {
           headers: {
             // these URLs should be ignored in proxy scripts
             updateURL: 'http://example.com',
-            downloadURL: 'http://example.com',
             installURL: 'http://example.com',
             // require tag will be extended in the proxy script
             require: 'http://require.example.com',
@@ -75,7 +73,6 @@ describe('proxy script', () => {
             // these URLs should be ignored in proxy scripts
             updateURL: 'http://example.com',
             downloadURL: 'http://example.com',
-            installURL: 'http://example.com',
           },
           proxyScript: {
             baseURL: 'http://base.example.com',

@@ -3,7 +3,6 @@
 // @description this is a fantastic userscript
 // @version 0.0.0
 // @match *://*/*
-// @downloadURL http://example.com
 // @installURL http://example.com
 // @require http://require.example.com
 // @updateURL http://example.com

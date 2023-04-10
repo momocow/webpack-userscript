@@ -109,6 +109,26 @@ describe('headers', () => {
         return expect(promise).toReject();
       });
 
+      for (const headers of Fixtures.mutuallyExclusiveTags) {
+        it(
+          'should throw error if mutually exclusive tags present: ' +
+            Object.keys(headers).join(', '),
+          () => {
+            const promise = compile(input, {
+              ...Fixtures.webpackConfig,
+              plugins: [
+                new UserscriptPlugin({
+                  headers,
+                  strict: true,
+                }),
+              ],
+            });
+
+            return expect(promise).toReject();
+          },
+        );
+      }
+
       for (const [tag, { validValues, invalidValues }] of Object.entries(
         Fixtures.tagSamples,
       )) {

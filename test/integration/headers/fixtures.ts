@@ -1,4 +1,4 @@
-import { ValueType } from 'webpack-userscript';
+import { HeadersProps, ValueType } from 'webpack-userscript';
 
 import { File, GlobalFixtures } from '../fixtures';
 
@@ -91,4 +91,22 @@ export class Fixtures extends GlobalFixtures {
       invalidValues: [{ value: { unknownBrowser: 'incompatible string' } }],
     },
   };
+
+  public static readonly mutuallyExclusiveTags: HeadersProps[] = [
+    {
+      homepage: 'https://home.example.com',
+      homepageURL: 'https://home.example.com',
+      website: 'https://home.example.com',
+      source: 'https://home.example.com',
+    },
+    {
+      icon: 'https://icon.example.com',
+      iconURL: 'https://icon.example.com',
+      defaulticon: 'https://icon.example.com',
+    },
+    {
+      downloadURL: 'https://download.example.com',
+      installURL: 'https://install.example.com',
+    },
+  ];
 }
