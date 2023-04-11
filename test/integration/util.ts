@@ -48,6 +48,7 @@ export async function compile(
 }
 
 export interface WatchStep {
+  cwd: string;
   output: Volume;
   writeFile: (
     file: string,
@@ -111,6 +112,7 @@ export async function watchCompile(
 
       try {
         const conti = await handle({
+          cwd: watchDir,
           output,
           writeFile: writeFileInWatchDir,
         });
