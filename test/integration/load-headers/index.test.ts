@@ -1,4 +1,7 @@
+import path from 'node:path';
+
 import { HeadersProps, UserscriptPlugin } from 'webpack-userscript';
+import * as fs from 'webpack-userscript/fs';
 
 import { compile, watchCompile } from '../util';
 import { Volume } from '../volume';
@@ -77,13 +80,11 @@ describe('load-headers', () => {
         headers: './headers.json',
       });
 
-      const loadFromHeadersFile = jest.spyOn(
-        plugin.features[0],
-        'loadFromHeadersFile' as any,
-      );
+      const readJSONSpy = jest.spyOn(fs, 'readJSON');
 
       const entry = './entry.js';
       let step = 0;
+      let inputFullPath = '';
 
       await watchCompile(
         input,
@@ -93,16 +94,16 @@ describe('load-headers', () => {
           entry,
           plugins: [plugin],
         },
-        async ({ output, writeFile }) => {
+        async ({ output, writeFile, cwd }) => {
           switch (++step) {
             case 1:
-              await writeFile(entry, Fixtures.entryJs);
               expect(output.toJSON()).toEqual({
                 '/dist/output.user.js': Fixtures.entryUserJs(
                   Fixtures.loadHeadersHeaders,
                 ),
                 '/dist/output.meta.js': Fixtures.loadHeadersHeaders,
               });
+              await writeFile(entry, Fixtures.entryJs);
               break;
 
             case 2:
@@ -112,6 +113,8 @@ describe('load-headers', () => {
               fail('invalid steps');
           }
 
+          inputFullPath = cwd;
+
           return step < 2;
         },
       );
@@ -120,7 +123,17 @@ describe('load-headers', () => {
         fail('invalid steps');
       }
 
-      expect(loadFromHeadersFile).toHaveBeenCalledOnce();
+      const headersJsonPath = path.join(inputFullPath, 'headers.json');
+
+      // headers.json has only been read once
+      expect(
+        readJSONSpy.mock.calls.reduce(
+          (count, call) => (call[0] === headersJsonPath ? ++count : count),
+          0,
+        ),
+      ).toEqual(1);
+
+      readJSONSpy.mockRestore();
     });
   });
 
@@ -177,6 +190,33 @@ describe('load-headers', () => {
               ...headers,
               name: 'load-headers',
             }),
+          }),
+        ],
+      });
+
+      expect(output.toJSON()).toEqual({
+        '/dist/output.user.js': Fixtures.entryUserJs(
+          Fixtures.loadHeadersHeaders,
+        ),
+        '/dist/output.meta.js': Fixtures.loadHeadersHeaders,
+      });
+    });
+  });
+
+  describe('i18n', () => {
+    it('headers object', async () => {
+      const output = await compile(input, {
+        ...Fixtures.webpackConfig,
+        plugins: [
+          new UserscriptPlugin({
+            headers: {
+              name: 'load-headers',
+            },
+            i18n: {
+              en: {
+                name: 'load-headers-en',
+              },
+            },
           }),
         ],
       });
