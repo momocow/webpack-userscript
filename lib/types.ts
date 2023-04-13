@@ -117,6 +117,7 @@ export interface WaterfallContext {
   buildTime: Date;
   fileInfo: FileInfo;
   compilation: Compilation;
+  locale: string;
 }
 
 export interface UserscriptPluginInstance {
@@ -128,7 +129,7 @@ export interface UserscriptPluginInstance {
     headers: AsyncSeriesWaterfallHook<[HeadersProps, WaterfallContext]>;
     proxyHeaders: AsyncSeriesWaterfallHook<[HeadersProps, WaterfallContext]>;
     proxyScriptFile: AsyncSeriesWaterfallHook<[string, WaterfallContext]>;
-    renderHeaders: AsyncSeriesBailHook<HeadersProps, string>;
+    renderHeaders: AsyncSeriesBailHook<Map<string, HeadersProps>, string>;
     renderProxyHeaders: AsyncSeriesBailHook<HeadersProps, string>;
   };
 }
