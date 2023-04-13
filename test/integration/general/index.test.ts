@@ -40,4 +40,24 @@ describe('general', () => {
       '/dist/output.js': Fixtures.entryMinJs,
     });
   });
+
+  // eslint-disable-next-line max-len
+  it('should successfully compile even the file extension is .user.js', async () => {
+    input.renameSync('/entry.js', '/entry.user.js');
+
+    const output = await compile(input, {
+      ...Fixtures.webpackConfig,
+      entry: '/entry.user.js',
+      output: {
+        path: '/dist',
+        filename: 'output.user.js',
+      },
+      plugins: [new UserscriptPlugin()],
+    });
+
+    expect(output.toJSON()).toEqual({
+      '/dist/output.user.js': Fixtures.entryUserJs(Fixtures.headers),
+      '/dist/output.meta.js': Fixtures.headers,
+    });
+  });
 });

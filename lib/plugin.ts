@@ -189,8 +189,10 @@ export class UserscriptPlugin
       ),
     );
 
-    for (const { originalFile } of context.fileInfo) {
-      compilation.deleteAsset(originalFile);
+    for (const { originalFile, userjsFile } of context.fileInfo) {
+      if (originalFile !== userjsFile) {
+        compilation.deleteAsset(originalFile);
+      }
     }
 
     await this.hooks.process.promise(compilation, context);
@@ -300,14 +302,24 @@ export class UserscriptPlugin
       ? await this.hooks.renderProxyHeaders.promise(proxyHeaders)
       : undefined;
 
-    compilation.emitAsset(
-      userjsFile,
-      new ConcatSource(headersStr, '\n', sourceAsset.source),
-      {
-        minimized: true,
-      },
-    );
-    chunk.files.add(userjsFile);
+    if (userjsFile !== originalFile) {
+      compilation.emitAsset(
+        userjsFile,
+        new ConcatSource(headersStr, '\n', sourceAsset.source),
+        {
+          minimized: true,
+        },
+      );
+      chunk.files.add(userjsFile);
+    } else {
+      compilation.updateAsset(
+        userjsFile,
+        new ConcatSource(headersStr, '\n', sourceAsset.source),
+        {
+          minimized: true,
+        },
+      );
+    }
 
     if (metajs !== false) {
       compilation.emitAsset(metajsFile, new RawSource(headersStr), {
