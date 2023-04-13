@@ -1,0 +1,7 @@
+// ==UserScript==
+// @name i18n
+// @description this is a fantastic userscript
+// @description:en i18n description
+// @version 0.0.0
+// @match *://*/*
+// ==/UserScript==

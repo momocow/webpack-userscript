@@ -202,31 +202,4 @@ describe('load-headers', () => {
       });
     });
   });
-
-  describe('i18n', () => {
-    it('headers object', async () => {
-      const output = await compile(input, {
-        ...Fixtures.webpackConfig,
-        plugins: [
-          new UserscriptPlugin({
-            headers: {
-              name: 'load-headers',
-            },
-            i18n: {
-              en: {
-                name: 'load-headers-en',
-              },
-            },
-          }),
-        ],
-      });
-
-      expect(output.toJSON()).toEqual({
-        '/dist/output.user.js': Fixtures.entryUserJs(
-          Fixtures.loadHeadersHeaders,
-        ),
-        '/dist/output.meta.js': Fixtures.loadHeadersHeaders,
-      });
-    });
-  });
 });
