@@ -28,7 +28,7 @@ module.exports = {
       'error',
       {
         code: 80,
-        ignoreUrls: true,
+        ignoreComments: true,
       }
     ],
     'simple-import-sort/imports': 'error',
@@ -40,6 +40,7 @@ module.exports = {
       'error',
       { blankLine: 'always', prev: '*', next: 'return' },
       { blankLine: 'always', prev: '*', next: 'throw' },
+      { blankLine: 'always', prev: '*', next: 'continue' },
     ],
   },
   settings: {
