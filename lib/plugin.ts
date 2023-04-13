@@ -7,6 +7,7 @@ import {
 } from 'tapable';
 import { Compilation, Compiler, sources, WebpackPluginInstance } from 'webpack';
 
+import { DEFAULT_LOCALE_KEY } from './const';
 import {
   Feature,
   FixTags,
@@ -40,6 +41,7 @@ export interface UserscriptPluginOptions {
   metajs?: boolean;
   skip?: (fileInfo: FileInfo) => boolean;
   proxyScript?: unknown;
+  i18n?: Record<string, unknown>;
 }
 
 export type UserscriptOptions = LoadHeadersOptions &
@@ -79,7 +81,7 @@ export class UserscriptPlugin
       'proxyScriptFile',
       'context',
     ]),
-    renderHeaders: new AsyncSeriesBailHook<HeadersProps, string>([
+    renderHeaders: new AsyncSeriesBailHook<Map<string, HeadersProps>, string>([
       'headersProps',
     ]),
     renderProxyHeaders: new AsyncSeriesBailHook<HeadersProps, string>([
@@ -246,7 +248,7 @@ export class UserscriptPlugin
     context: CompilationContext,
     fileInfo: FileInfo,
   ): Promise<void> {
-    const { metajs, proxyScript } = this.options;
+    const { metajs, proxyScript, i18n } = this.options;
     const { originalFile, chunk, metajsFile, userjsFile } = fileInfo;
     const sourceAsset = compilation.getAsset(originalFile);
     const waterfall = {
@@ -260,14 +262,38 @@ export class UserscriptPlugin
       return;
     }
 
-    const headers = await this.hooks.headers.promise({}, waterfall);
-    const headersStr = await this.hooks.renderHeaders.promise(headers);
+    const localizedHeaders = new Map<string, HeadersProps>();
+
+    const headers = await this.hooks.headers.promise(
+      {},
+      { ...waterfall, locale: DEFAULT_LOCALE_KEY },
+    );
+    localizedHeaders.set(DEFAULT_LOCALE_KEY, headers);
+
+    if (i18n) {
+      await Promise.all(
+        Object.keys(i18n).map(async (locale) => {
+          localizedHeaders.set(
+            locale,
+            await this.hooks.headers.promise({}, { ...waterfall, locale }),
+          );
+        }),
+      );
+    }
+
+    const headersStr = await this.hooks.renderHeaders.promise(localizedHeaders);
 
     const proxyHeaders = proxyScript
-      ? await this.hooks.proxyHeaders.promise(headers, waterfall)
+      ? await this.hooks.proxyHeaders.promise(headers, {
+          ...waterfall,
+          locale: DEFAULT_LOCALE_KEY,
+        })
       : undefined;
     const proxyScriptFile = proxyScript
-      ? await this.hooks.proxyScriptFile.promise('', waterfall)
+      ? await this.hooks.proxyScriptFile.promise('', {
+          ...waterfall,
+          locale: DEFAULT_LOCALE_KEY,
+        })
       : undefined;
 
     const proxyHeadersStr = proxyHeaders

@@ -23,6 +23,7 @@ export function applyDecorators(
     for (const decorator of decorators) {
       if (target instanceof Function && !descriptor) {
         (decorator as ClassDecorator)(target);
+
         continue;
       }
       (decorator as MethodDecorator | PropertyDecorator)(

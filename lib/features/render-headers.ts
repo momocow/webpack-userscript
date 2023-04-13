@@ -1,5 +1,6 @@
 import { getBorderCharacters, table } from 'table';
 
+import { DEFAULT_LOCALE_KEY } from '../const';
 import {
   HeadersProps,
   TagType,
@@ -20,8 +21,8 @@ export class RenderHeaders extends Feature<RenderHeadersOptions> {
   public readonly name = 'RenderHeaders';
 
   public apply({ hooks }: UserscriptPluginInstance): void {
-    hooks.renderHeaders.tap(this.name, (headers) =>
-      this.render(headers, this.options),
+    hooks.renderHeaders.tap(this.name, (headersMap) =>
+      this.render(this.mergeHeadersMap(headersMap), this.options),
     );
 
     if (this.options.proxyScript) {
@@ -29,6 +30,20 @@ export class RenderHeaders extends Feature<RenderHeadersOptions> {
         this.render(headers, this.options),
       );
     }
+  }
+
+  private mergeHeadersMap(headersMap: Map<string, HeadersProps>): HeadersProps {
+    return Array.from(headersMap)
+      .map(
+        ([locale, headers]) =>
+          Object.fromEntries(
+            Object.entries(headers).map(([tag, value]) => [
+              locale === DEFAULT_LOCALE_KEY ? tag : `${tag}:${locale}`,
+              value,
+            ]),
+          ) as HeadersProps,
+      )
+      .reduce((h1, h2) => ({ ...h1, ...h2 }));
   }
 
   private render(
@@ -54,11 +69,8 @@ export class RenderHeaders extends Feature<RenderHeadersOptions> {
     const rows = Object.entries(headers)
       .sort(
         ([tag1], [tag2]) =>
-          (orderRevMap.get(tag1) ?? orderRevMap.size) -
-            (orderRevMap.get(tag2) ?? orderRevMap.size) ||
-          // the above expression evaluates 0
-          // only if both tags are out of orderRevMap
-          // if so, use ascending ascii order
+          (orderRevMap.get(this.getTagName(tag1)) ?? orderRevMap.size) -
+            (orderRevMap.get(this.getTagName(tag2)) ?? orderRevMap.size) ||
           (tag1 > tag2 ? 1 : tag1 < tag2 ? -1 : 0),
       )
       .flatMap(([tag, value]) => this.renderTag(tag, value));
@@ -97,5 +109,9 @@ export class RenderHeaders extends Feature<RenderHeadersOptions> {
     }
 
     return [];
+  }
+
+  private getTagName(tag: string): string {
+    return tag.replace(/:.+$/, '');
   }
 }

@@ -9,164 +9,164 @@ import {
   StrictHeadersProps,
   SwitchValue,
 } from '../../types';
-import { MutuallyExclusive } from '../../utils';
 import {
+  IsDefined,
   IsEnumValue,
   IsMultiValue,
   IsNamedValue,
   IsNestedValue,
-  IsRequiredValue,
+  IsOptional,
   IsSingleValue,
   IsSwitchValue,
+  IsUnique,
   IsURLValue,
-  IsVersionValue,
-} from './decorators';
+  partialGroups,
+} from './utils';
 
-class Compatibility implements CompatibilityValue {
+export enum ValidationGroup {
+  Main = 'main',
+  I18n = 'i18n',
+}
+
+export const Main = partialGroups(ValidationGroup.Main);
+export const I18n = partialGroups(ValidationGroup.I18n);
+export const Always = partialGroups(ValidationGroup.Main, ValidationGroup.I18n);
+
+export class Compatibility implements CompatibilityValue {
   [x: string]: SingleValue;
 
-  @IsSingleValue()
+  @Main(IsOptional(), IsSingleValue())
   public readonly firefox?: SingleValue;
 
-  @IsSingleValue()
+  @Main(IsOptional(), IsSingleValue())
   public readonly chrome?: SingleValue;
 
-  @IsSingleValue()
+  @Main(IsOptional(), IsSingleValue())
   public readonly opera?: SingleValue;
 
-  @IsSingleValue()
+  @Main(IsOptional(), IsSingleValue())
   public readonly safari?: SingleValue;
 
-  @IsSingleValue()
+  @Main(IsOptional(), IsSingleValue())
   public readonly edge?: SingleValue;
 }
 
 export class Headers implements StrictHeadersProps {
-  @IsRequiredValue()
-  public readonly name!: SingleValue;
+  @Main(IsDefined(), IsSingleValue())
+  @I18n(IsOptional(), IsSingleValue())
+  public readonly name?: SingleValue;
 
-  @IsVersionValue()
+  @Main(IsOptional(), IsSingleValue())
   public readonly version?: SingleValue;
 
-  @IsSingleValue()
+  @Main(IsOptional(), IsSingleValue())
   public readonly namespace?: SingleValue;
 
-  @IsSingleValue()
+  @Main(IsOptional(), IsSingleValue())
   public readonly author?: SingleValue;
 
-  @IsSingleValue()
+  @Always(IsOptional(), IsSingleValue())
   public readonly description?: SingleValue;
 
-  @IsURLValue()
-  @MutuallyExclusive('homepage')
+  @Main(IsOptional(), IsURLValue(), IsUnique('homepage'))
   public readonly homepage?: SingleValue;
 
-  @IsURLValue()
-  @MutuallyExclusive('homepage')
+  @Main(IsOptional(), IsURLValue(), IsUnique('homepage'))
   public readonly homepageURL?: SingleValue;
 
-  @IsURLValue()
-  @MutuallyExclusive('homepage')
+  @Main(IsOptional(), IsURLValue(), IsUnique('homepage'))
   public readonly website?: SingleValue;
 
-  @IsURLValue()
-  @MutuallyExclusive('homepage')
+  @Main(IsOptional(), IsURLValue(), IsUnique('homepage'))
   public readonly source?: SingleValue;
 
-  @IsURLValue()
-  @MutuallyExclusive('icon')
+  @Main(IsOptional(), IsURLValue(), IsUnique('icon'))
   public readonly icon?: SingleValue;
 
-  @IsURLValue()
-  @MutuallyExclusive('icon')
+  @Main(IsOptional(), IsURLValue(), IsUnique('icon'))
   public readonly iconURL?: SingleValue;
 
-  @IsURLValue()
-  @MutuallyExclusive('icon')
+  @Main(IsOptional(), IsURLValue(), IsUnique('icon'))
   public readonly defaulticon?: SingleValue;
 
-  @IsURLValue()
-  @MutuallyExclusive('icon64')
+  @Main(IsOptional(), IsURLValue(), IsUnique('icon64'))
   public readonly icon64?: SingleValue;
 
-  @IsURLValue()
-  @MutuallyExclusive('icon64')
+  @Main(IsOptional(), IsURLValue(), IsUnique('icon64'))
   public readonly icon64URL?: SingleValue;
 
-  @IsURLValue()
+  @Main(IsOptional(), IsURLValue())
   public readonly updateURL?: SingleValue;
 
-  @IsURLValue()
-  @MutuallyExclusive('downloadURL')
+  @Main(IsOptional(), IsURLValue(), IsUnique('downloadURL'))
   public readonly downloadURL?: SingleValue;
 
-  @IsURLValue()
-  @MutuallyExclusive('downloadURL')
+  @Main(IsOptional(), IsURLValue(), IsUnique('downloadURL'))
   public readonly installURL?: SingleValue;
 
-  @IsURLValue()
+  @Main(IsOptional(), IsURLValue())
   public readonly supportURL?: SingleValue;
 
-  @IsMultiValue()
+  @Main(IsOptional(), IsMultiValue())
   public readonly include?: MultiValue;
 
-  @IsMultiValue()
+  @Main(IsOptional(), IsMultiValue())
   public readonly match?: MultiValue;
 
-  @IsMultiValue()
+  @Main(IsOptional(), IsMultiValue())
   public readonly 'exclude-match'?: MultiValue;
 
-  @IsMultiValue()
+  @Main(IsOptional(), IsMultiValue())
   public readonly exclude?: MultiValue;
 
-  @IsMultiValue()
+  @Main(IsOptional(), IsMultiValue())
   public readonly require?: MultiValue;
 
-  @IsNamedValue()
+  @Main(IsOptional(), IsNamedValue())
   public readonly resource?: NamedValue;
 
-  @IsMultiValue()
+  @Main(IsOptional(), IsMultiValue())
   public readonly connect?: MultiValue;
 
-  @IsMultiValue()
+  @Main(IsOptional(), IsMultiValue())
   public readonly grant?: MultiValue;
 
-  @IsMultiValue()
+  @Main(IsOptional(), IsMultiValue())
   public readonly webRequest?: MultiValue;
 
-  @IsSwitchValue()
+  @Main(IsOptional(), IsSwitchValue())
   public readonly noframes?: SwitchValue;
 
-  @IsSwitchValue()
+  @Main(IsOptional(), IsSwitchValue())
   public readonly unwrap?: SwitchValue;
 
-  @IsNamedValue()
+  @Always(IsOptional(), IsNamedValue())
   public readonly antifeature?: NamedValue;
 
-  @IsEnumValue(RunAt)
+  @Main(IsOptional(), IsEnumValue(RunAt))
   public readonly 'run-at'?: RunAt;
 
-  @IsSingleValue()
+  @Main(IsOptional(), IsSingleValue())
   public readonly copyright?: SingleValue;
 
-  @IsEnumValue(Sandbox)
+  @Main(IsOptional(), IsEnumValue(Sandbox))
   public readonly sandbox?: Sandbox;
 
-  @IsEnumValue(InjectInto)
+  @Main(IsOptional(), IsEnumValue(InjectInto))
   public readonly 'inject-into'?: InjectInto;
 
-  @IsSingleValue()
+  @Main(IsOptional(), IsSingleValue())
   public readonly license?: SingleValue;
 
-  @IsURLValue()
+  @Main(IsOptional(), IsURLValue())
   public readonly contributionURL?: SingleValue;
 
-  @IsSingleValue()
+  @Main(IsOptional(), IsSingleValue())
   public readonly contributionAmount?: SingleValue;
 
-  @IsNestedValue(Compatibility)
+  @Main(IsOptional(), IsNestedValue(Compatibility))
   public readonly compatible?: Compatibility;
 
-  @IsNestedValue(Compatibility)
+  @Main(IsOptional(), IsNestedValue(Compatibility))
   public readonly incompatible?: Compatibility;
 }

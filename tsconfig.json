@@ -25,7 +25,8 @@
     "emitDecoratorMetadata": true,
     "paths": {
       "webpack-userscript": ["lib"],
-      "webpack-userscript/*": ["lib/*"]
+      "webpack-userscript/*": ["lib/*"],
+      "class-transformer/types/storage": ["node_modules/class-transformer/cjs/storage"]
     }
   },
   "include": ["**/*.ts"]
