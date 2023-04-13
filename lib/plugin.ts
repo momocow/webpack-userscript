@@ -12,18 +12,23 @@ import {
   FixTags,
   Interpolater,
   LoadHeaders,
+  LoadHeadersOptions,
   ProcessProxyScript,
   ProcessSSRI,
+  ProxyScriptOptions,
   RenderHeaders,
+  RenderHeadersOptions,
   ResolveBaseURLs,
+  ResolveBaseURLsOptions,
   SetDefaultTags,
+  SSRIOptions,
   ValidateHeaders,
+  ValidateHeadersOptions,
 } from './features';
 import {
   CompilationContext,
   FileInfo,
   HeadersProps,
-  UserscriptOptions,
   UserscriptPluginInstance,
   WaterfallContext,
 } from './types';
@@ -31,22 +36,26 @@ import { date } from './utils';
 
 const { ConcatSource, RawSource } = sources;
 
+export interface UserscriptPluginOptions {
+  metajs?: boolean;
+  skip?: (fileInfo: FileInfo) => boolean;
+  proxyScript?: unknown;
+}
+
+export type UserscriptOptions = LoadHeadersOptions &
+  ResolveBaseURLsOptions &
+  SSRIOptions &
+  ProxyScriptOptions &
+  RenderHeadersOptions &
+  ValidateHeadersOptions &
+  UserscriptPluginOptions;
+
 export class UserscriptPlugin
   implements WebpackPluginInstance, UserscriptPluginInstance
 {
   public readonly name = 'UserscriptPlugin';
 
-  public readonly features: Feature[] = [
-    new LoadHeaders(this.options),
-    new FixTags(this.options),
-    new ResolveBaseURLs(this.options),
-    new ProcessSSRI(this.options),
-    new SetDefaultTags(this.options),
-    new ProcessProxyScript(this.options),
-    new Interpolater(this.options),
-    new ValidateHeaders(this.options),
-    new RenderHeaders(this.options),
-  ];
+  public readonly features: Feature[];
 
   public readonly hooks = {
     init: new AsyncParallelHook<[Compiler]>(['compiler']),
@@ -79,14 +88,25 @@ export class UserscriptPlugin
   };
 
   private readonly contexts = new WeakMap<Compilation, CompilationContext>();
+  private options: UserscriptPluginOptions = {};
 
-  public constructor(public options: UserscriptOptions = {}) {
-    const { metajs = true, strict = true } = this.options;
+  public constructor(options: UserscriptOptions = {}) {
+    const { metajs = true, strict = true } = options;
+    Object.assign(options, { metajs, strict } as UserscriptOptions);
 
-    Object.assign(this.options, {
-      metajs,
-      strict,
-    });
+    this.features = [
+      new LoadHeaders(options),
+      new FixTags(options),
+      new ResolveBaseURLs(options),
+      new ProcessSSRI(options),
+      new SetDefaultTags(options),
+      new ProcessProxyScript(options),
+      new Interpolater(options),
+      new ValidateHeaders(options),
+      new RenderHeaders(options),
+    ];
+
+    this.options = options;
   }
 
   public apply(compiler: Compiler): void {
