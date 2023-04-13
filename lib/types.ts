@@ -5,15 +5,6 @@ import {
 } from 'tapable';
 import { Chunk, Compilation, Compiler } from 'webpack';
 
-import {
-  LoadHeadersOptions,
-  ProxyScriptOptions,
-  RenderHeadersOptions,
-  ResolveBaseURLsOptions,
-  SSRIOptions,
-  ValidateHeadersOptions,
-} from './features';
-
 export type SingleValue = string | undefined;
 export type MultiValue = SingleValue | SingleValue[];
 export type NamedValue = Record<string, SingleValue>;
@@ -141,33 +132,3 @@ export interface UserscriptPluginInstance {
     renderProxyHeaders: AsyncSeriesBailHook<HeadersProps, string>;
   };
 }
-
-export interface UserscriptPluginOptions {
-  metajs?: boolean;
-  skip?: (fileInfo: FileInfo) => boolean;
-}
-
-export type UserscriptOptions = LoadHeadersOptions &
-  ResolveBaseURLsOptions &
-  SSRIOptions &
-  ProxyScriptOptions &
-  RenderHeadersOptions &
-  ValidateHeadersOptions &
-  UserscriptPluginOptions;
-
-export {
-  Feature,
-  HeaderClass,
-  HeadersProvider,
-  LoadHeadersOptions,
-  ProxyScriptFeatureOptions,
-  ProxyScriptOptions,
-  RenderHeadersOptions,
-  ResolveBaseURLsOptions,
-  SSRIAlgorithm,
-  SSRIFeatureOptions,
-  SSRIOptions,
-  SSRITag,
-  URLFilter,
-  ValidateHeadersOptions,
-} from './features';
