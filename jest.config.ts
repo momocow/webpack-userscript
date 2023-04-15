@@ -3,6 +3,8 @@ import { pathsToModuleNameMapper } from 'ts-jest';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { compilerOptions } = require('./tsconfig.json');
 
+const EXCLUDE_PATHS = new Set(['class-transformer/cjs/storage']);
+
 module.exports = {
   clearMocks: true,
   testMatch: [
@@ -18,7 +20,13 @@ module.exports = {
     ],
   },
   modulePaths: [compilerOptions.baseUrl],
-  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
+  moduleNameMapper: pathsToModuleNameMapper(
+    Object.fromEntries(
+      Object.entries(compilerOptions.paths).filter(
+        (e): e is [string, string[]] => !EXCLUDE_PATHS.has(e[0]),
+      ),
+    ),
+  ),
   setupFiles: ['./test/setup.ts'],
   setupFilesAfterEnv: ['jest-extended/all'],
 };

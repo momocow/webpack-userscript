@@ -1,5 +1,5 @@
 import * as transformer from 'class-transformer';
-import { defaultMetadataStorage } from 'class-transformer/types/storage';
+import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
 import * as validator from 'class-validator';
 
 import { applyDecorators, IsRecord, MutuallyExclusive } from '../../utils';

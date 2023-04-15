@@ -26,7 +26,7 @@
     "paths": {
       "webpack-userscript": ["lib"],
       "webpack-userscript/*": ["lib/*"],
-      "class-transformer/types/storage": ["node_modules/class-transformer/cjs/storage"]
+      "class-transformer/cjs/storage": ["node_modules/class-transformer/types/storage"]
     }
   },
   "include": ["**/*.ts"]
