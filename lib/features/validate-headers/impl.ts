@@ -41,14 +41,14 @@ export class ValidateHeaders extends Feature<ValidateHeadersOptions> {
     HeadersClass: HeaderClass,
     { whitelist, strict }: HeadersValidatorOptions = {},
   ): HeadersProps {
-    const groups = [
+    const validatorGroups = [
       locale === DEFAULT_LOCALE_KEY
         ? ValidationGroup.Main
         : ValidationGroup.I18n,
     ];
 
     const transformerGroups = whitelist
-      ? groups
+      ? validatorGroups
       : [ValidationGroup.Main, ValidationGroup.I18n];
 
     const headers = plainToInstance(HeadersClass, headersProps, {
@@ -63,16 +63,12 @@ export class ValidateHeaders extends Feature<ValidateHeadersOptions> {
         forbidNonWhitelisted: true,
         whitelist: true,
         stopAtFirstError: false,
-        groups: [
-          locale === DEFAULT_LOCALE_KEY
-            ? ValidationGroup.Main
-            : ValidationGroup.I18n,
-        ],
+        groups: validatorGroups,
       });
 
       if (errors.length > 0) {
         throw new Error(
-          `Validation groups: ${groups}\n` +
+          `Validation groups: ${validatorGroups}\n` +
             errors
               .map((err) => err.toString(undefined, undefined, undefined, true))
               .join('\n'),
