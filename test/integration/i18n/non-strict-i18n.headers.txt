@@ -1,8 +1,7 @@
 // ==UserScript==
-// @name i18n
-// @name:en localized name
+// @name non-strict i18n
 // @description this is a fantastic userscript
-// @description:en i18n description
 // @version 0.0.0
 // @match *://*/*
+// @downloadURL:en https://example.com
 // ==/UserScript==

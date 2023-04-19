@@ -47,11 +47,15 @@ export class ValidateHeaders extends Feature<ValidateHeadersOptions> {
         : ValidationGroup.I18n,
     ];
 
+    const transformerGroups = whitelist
+      ? groups
+      : [ValidationGroup.Main, ValidationGroup.I18n];
+
     const headers = plainToInstance(HeadersClass, headersProps, {
       exposeDefaultValues: true,
       excludeExtraneousValues: whitelist,
       exposeUnsetFields: false,
-      groups,
+      groups: transformerGroups,
     });
 
     if (strict) {
@@ -59,7 +63,11 @@ export class ValidateHeaders extends Feature<ValidateHeadersOptions> {
         forbidNonWhitelisted: true,
         whitelist: true,
         stopAtFirstError: false,
-        groups,
+        groups: [
+          locale === DEFAULT_LOCALE_KEY
+            ? ValidationGroup.Main
+            : ValidationGroup.I18n,
+        ],
       });
 
       if (errors.length > 0) {
@@ -72,6 +80,9 @@ export class ValidateHeaders extends Feature<ValidateHeadersOptions> {
       }
     }
 
-    return instanceToPlain(headers, { exposeUnsetFields: false, groups });
+    return instanceToPlain(headers, {
+      exposeUnsetFields: false,
+      groups: transformerGroups,
+    });
   }
 }
