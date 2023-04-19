@@ -16,7 +16,7 @@ export type ValidatorFactory<T extends any[] = []> = (...args: T) => Validator;
  * wrap it in a new `@Expose()` implementation to stack for `groups` options.
  */
 export const Expose: Validator =
-  ({ groups } = {}) =>
+  (options: transformer.ExposeOptions = {}) =>
   (target, prop) => {
     const metadata = defaultMetadataStorage.findExposeMetadata(
       target.constructor,
@@ -24,14 +24,21 @@ export const Expose: Validator =
     );
 
     if (!metadata) {
-      transformer.Expose()(target, prop);
+      transformer.Expose(options)(target, prop);
 
       return;
     }
 
-    if (!groups) return;
-
-    metadata.options.groups = (metadata.options.groups ?? []).concat(groups);
+    // merge expose options
+    Object.assign(
+      metadata.options,
+      options,
+      options.groups
+        ? {
+            groups: (metadata.options.groups ?? []).concat(options.groups),
+          }
+        : undefined,
+    );
   };
 
 export const partialGroups =
