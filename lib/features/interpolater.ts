@@ -37,7 +37,7 @@ export class Interpolater extends Feature {
     buildTime,
   }: WaterfallContext): Record<string, string> {
     return {
-      name: chunk.name,
+      name: chunk.name ?? '',
       file: originalFile,
       filename,
       basename,
