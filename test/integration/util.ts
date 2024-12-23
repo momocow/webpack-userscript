@@ -5,7 +5,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 import express, { static as expressStatic } from 'express';
-import { Configuration, webpack } from 'webpack';
+import { Compiler, Configuration, webpack } from 'webpack';
 
 import { createFsFromVolume, Volume } from './volume';
 
@@ -14,6 +14,8 @@ export const GLOBAL_FIXTURES_DIR = path.join(__dirname, 'fixtures');
 export interface CompilerFileSystems {
   intermediateFileSystem?: Volume;
 }
+
+type IntermediateFileSystem = Compiler['intermediateFileSystem'];
 
 export async function compile(
   input: Volume,
@@ -25,8 +27,8 @@ export async function compile(
 
   compiler.inputFileSystem = createFsFromVolume(input);
   compiler.outputFileSystem = createFsFromVolume(output);
-  compiler.intermediateFileSystem =
-    intermediateFileSystem ?? (compiler.outputFileSystem as Volume);
+  compiler.intermediateFileSystem = (intermediateFileSystem ??
+    compiler.outputFileSystem) as IntermediateFileSystem;
 
   const stats = await promisify(compiler.run.bind(compiler))();
   await promisify(compiler.close.bind(compiler))();
