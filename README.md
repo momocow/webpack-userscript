@@ -249,11 +249,11 @@ To avoid caching and make the main script always be updated after each page refr
 
 To enable the proxy script, provide a `proxyScript` configuration to the plugin constructor.
 
-`baseUrl` should be the base URL of the dev server, and the `filename` is for the proxy script.
+`baseURL` should be the base URL of the dev server, and the `filename` is for the proxy script.
 
 > Note: `filename` will be interpolated.
 
-After starting the dev server, you can find your proxy script under `<baseUrl>/<filename>`. In the example below, assume the entry filename is `index.js`, you should visit `http://127.0.0.1:12345/index.proxy.user.js` to install the proxy script on TamperMonkey.
+After starting the dev server, you can find your proxy script under `<baseURL>/<filename>`. In the example below, assume the entry filename is `index.js`, you should visit `http://127.0.0.1:12345/index.proxy.user.js` to install the proxy script on TamperMonkey.
 
 See [Issue#63](https://github.com/momocow/webpack-userscript/issues/63) for more information.
 
@@ -261,7 +261,7 @@ See [Issue#63](https://github.com/momocow/webpack-userscript/issues/63) for more
 new WebpackUserscript({
   // <...your other configs...>,
   proxyScript: {
-    baseUrl: 'http://127.0.0.1:12345',
+    baseURL: 'http://127.0.0.1:12345',
     filename: '[basename].proxy.user.js',
   },
 });
